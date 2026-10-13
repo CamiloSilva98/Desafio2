@@ -5,8 +5,10 @@ CONFIG -= qt
 
 SOURCES += \
         fecha.cpp \
+        foto.cpp \
         main.cpp
 
 HEADERS += \
     fecha.h \
+    foto.h \
     listadinamica.h

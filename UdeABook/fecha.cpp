@@ -1,30 +1,20 @@
 #include "fecha.h"
 #include <iostream>
-
-
-
-
 // Constructor parametrizado con inicializadores
-Fecha::Fecha(unsigned int dia, unsigned int mes, unsigned int anio, unsigned int hora)
-    : Dia(dia), Mes(mes), Anio(anio), Hora(hora) {
+//Fecha::Fecha() : anio(0), mes(1), dia(1), hora(0) {}
+Fecha::Fecha(unsigned int anio, unsigned int mes, unsigned int dia, unsigned int hora)
+    : Anio(anio), Mes(mes), Dia(dia), Hora(hora) {}
+// se empaqueta en formato AAAAMMDDHH
+unsigned long long Fecha::convertirAEntero() const {
+    return (static_cast<unsigned long long>(Anio) * 1000000) +
+           (Mes * 10000) +
+           (Dia * 100) +
+           Hora;
 }
+
 // Sobrecarga del operador de menor que (<)
-bool Fecha :: operator<(const Fecha& otra)const{
-    //comparar si la fecha es menor a 'otra'
-    //comparamos el año
-    if(Anio != otra.Anio){
-        return Anio < otra.Anio;
-    }
-    //comparamos los meses
-    if (Mes != otra.Mes) {
-        return Mes < otra.Mes;
-    }
-    //comparamos los dias
-    if (Dia != otra.Dia) {
-        return Dia < otra.Dia;
-    }
-    // Si los días coinciden, la decisión final depende de las horas.
-    return Hora < otra.Hora;
+bool Fecha::operator<(const Fecha& otra) const {
+    return this->convertirAEntero() < otra.convertirAEntero();
 }
 // Sobrecarga del operador de igualdad (==)
 bool Fecha ::operator==(const Fecha& otra )const{
@@ -38,7 +28,6 @@ unsigned int Fecha::getDia() const{return Dia; }
 unsigned int Fecha::getHora() const{return Hora; }
 void Fecha::setDia(unsigned int nuevoDia) {
     // Validación básica: los días deben estar entre 1 y 31
-    // (Opcional: podrías refinar esto según el mes y año bisiesto)
     if (nuevoDia >= 1 && nuevoDia <= 31) {
         Dia = nuevoDia;
     } else {

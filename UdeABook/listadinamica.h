@@ -133,6 +133,51 @@ public:
     {
         return (long)sizeof(*this) + (long)capacidad * (long)sizeof(T);
     }
+
+    // Ordena la lista utilizando el algoritmo Insertion Sort (ideal para arreglos dinámicos)
+    // Devuelve el número total de iteraciones (comparaciones) para la medición de recursos.
+    long ordenarCronologicamente()
+    {
+        long iteraciones = 0; // Contador de recursos
+        for (int i = 1; i < cantidad; i++)
+        {
+            T clave = datos[i];
+            int j = i - 1;
+
+            // Se apoya en el operador < que sobrecargamos en la clase Fecha
+            while (j >= 0 && clave < datos[j])
+            {
+                iteraciones++;
+                datos[j + 1] = datos[j];
+                j--;
+            }
+            datos[j + 1] = clave;
+
+            // Si el bucle terminó porque j < 0 o porque no era menor,
+            // igual se realizó al menos una comparación en la última evaluación (si j >= 0)
+            if (j >= 0) {
+                iteraciones++;
+            }
+        }
+        return iteraciones;
+    }
+
+    // Busca un elemento idéntico mediante búsqueda lineal
+    // Retorna el índice si lo encuentra, o -1 si no existe.
+    int buscarElemento(const T& objetivo, long& iteracionesFuera) const
+    {
+        iteracionesFuera = 0;
+        for (int i = 0; i < cantidad; i++)
+        {
+            iteracionesFuera++;
+            // Se apoya en el operador == que sobrecargamos en la clase Fecha
+            if (datos[i] == objetivo)
+            {
+                return i; // Encontrado
+            }
+        }
+        return -1; // No encontrado
+    }
 };
 
 #endif
