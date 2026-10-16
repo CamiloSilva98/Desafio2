@@ -138,26 +138,21 @@ public:
     // Devuelve el número total de iteraciones (comparaciones) para la medición de recursos.
     long ordenarCronologicamente()
     {
-        long iteraciones = 0; // Contador de recursos
+        long iteraciones = 0;
         for (int i = 1; i < cantidad; i++)
         {
-            T clave = datos[i];
+            iteraciones++;           // vuelta del for
+            T clave = datos[i];      // elemento que se va a ubicar
             int j = i - 1;
 
-            // Se apoya en el operador < que sobrecargamos en la clase Fecha
+            // mientras el de la izquierda sea mayor, se corre una posicion a la derecha
             while (j >= 0 && clave < datos[j])
             {
-                iteraciones++;
+                iteraciones++;       // vuelta del while
                 datos[j + 1] = datos[j];
                 j--;
             }
             datos[j + 1] = clave;
-
-            // Si el bucle terminó porque j < 0 o porque no era menor,
-            // igual se realizó al menos una comparación en la última evaluación (si j >= 0)
-            if (j >= 0) {
-                iteraciones++;
-            }
         }
         return iteraciones;
     }

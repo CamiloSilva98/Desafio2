@@ -2,38 +2,33 @@
 #include "foto.h"
 
 // Constructor por defecto
-Foto::Foto() : size(0), ruta(""), likes(0) {
-    // La fecha se inicializa sola con su propio constructor por defecto
-}
+Foto::Foto() : tamanio(0), ruta(""), likes(0) {}
 
 // Constructor con parámetros optimizado usando listas de inicialización
-Foto::Foto(const Fecha& Date, int Size, const std::string& Ruta, unsigned int Likes)
-    : date(Date), size(Size), ruta(Ruta), likes(Likes) {
+Foto::Foto(const Fecha& fechaFoto, int tamanio, const std::string& ruta, unsigned int likes)
+    : fechaFoto(fechaFoto), tamanio(tamanio), ruta(ruta), likes(likes) {}
+
+void Foto::darLike()
+{
+    likes++;
 }
-void Foto::quitarlike() {
-    if (likes > 0) { // Validación lógica de seguridad para evitar que un unsigned int desborde bajo 0
+// Resta un like. Como likes es unsigned, restar desde 0 daria un numero enorme,
+// por eso se valida antes.
+void Foto::quitarLike()
+{
+    if (likes > 0)
+    {
         likes--;
     }
 }
 //setters y gettes
-int Foto::getsize() const { return size; }
-unsigned int Foto::getlikes() const { return likes; }
-const std::string& Foto::getruta() const { return ruta; }
-const Fecha& Foto::getDate() const { return date; }
+const Fecha& Foto::getFechaFoto() const { return fechaFoto; }
+int Foto::getTamanio() const { return tamanio; }
+const std::string& Foto::getRuta() const { return ruta; }
+unsigned int Foto::getLikes() const { return likes; }
 
-// Implementación de Setters corregidos
-void Foto::setsize(int nuevoSize) {
-    size = nuevoSize;
-}
-
-void Foto::setlikes(unsigned int nuevolike) {
-    likes = nuevolike;
-}
-
-void Foto::setruta(const std::string& nuevaRuta) {
-    ruta = nuevaRuta; // Ahora sí asigna un string a un string
-}
-
-void Foto::setDate(const Fecha& nuevaFecha) {
-    date = nuevaFecha; // Asignación limpia utilizando el operador de copia por defecto de Fecha
-}
+// Setters
+void Foto::setFechaFoto(const Fecha& nuevaFecha) { fechaFoto = nuevaFecha; }
+void Foto::setTamanio(int nuevoTamanio) { tamanio = nuevoTamanio; }
+void Foto::setRuta(const std::string& nuevaRuta) { ruta = nuevaRuta; }
+void Foto::setLikes(unsigned int nuevosLikes) { likes = nuevosLikes; }

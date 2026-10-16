@@ -4,6 +4,7 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
+    album.cpp \
     fecha.cpp \
     foto.cpp \
     main.cpp \
@@ -11,6 +12,7 @@ SOURCES += \
     solicitudamistad.cpp
 
 HEADERS += \
+    album.h \
     fecha.h \
     foto.h \
     listadinamica.h \
