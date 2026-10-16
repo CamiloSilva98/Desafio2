@@ -5,20 +5,24 @@ CONFIG -= qt
 
 SOURCES += \
     album.cpp \
+    cargadordatos.cpp \
     fecha.cpp \
     foto.cpp \
     main.cpp \
     matrizamistad.cpp \
+    mensaje.cpp \
     solicitudamistad.cpp \
     udeabook.cpp \
     usuario.cpp
 
 HEADERS += \
     album.h \
+    cargadordatos.h \
     fecha.h \
     foto.h \
     listadinamica.h \
     matrizamistad.h \
+    mensaje.h \
     solicitudamistad.h \
     udeabook.h \
     usuario.h
