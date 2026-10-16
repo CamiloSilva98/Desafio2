@@ -9,7 +9,8 @@ SOURCES += \
     foto.cpp \
     main.cpp \
     matrizamistad.cpp \
-    solicitudamistad.cpp
+    solicitudamistad.cpp \
+    usuario.cpp
 
 HEADERS += \
     album.h \
@@ -17,4 +18,5 @@ HEADERS += \
     foto.h \
     listadinamica.h \
     matrizamistad.h \
-    solicitudamistad.h
+    solicitudamistad.h \
+    usuario.h

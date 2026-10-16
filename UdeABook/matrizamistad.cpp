@@ -1,6 +1,10 @@
 #include "MatrizAmistad.h"
 
-MatrizAmistad::MatrizAmistad(int n) : n(n), palabrasPorFila((n + 63) / 64) {
+// solicitud pendiente entre dos usuarios; guarda la posicion de cada uno
+// en el arreglo de usuarios (la misma que usa la matriz de amistad)
+
+MatrizAmistad::MatrizAmistad(int n) : n(n), palabrasPorFila((n + 63) / 64)
+{
     long total = (long)n * palabrasPorFila;
     bits = new unsigned long long[total > 0 ? total : 1];
     for (long k = 0; k < total; k++)
@@ -20,7 +24,8 @@ MatrizAmistad::MatrizAmistad(const MatrizAmistad& otra)
     }
 }
 
-MatrizAmistad& MatrizAmistad::operator=(const MatrizAmistad& otra) {
+MatrizAmistad& MatrizAmistad::operator=(const MatrizAmistad& otra)
+{
     if (this != &otra)
     {
         delete[] bits;
@@ -61,7 +66,8 @@ void MatrizAmistad::establecer(int i, int j)
     bits[(long)j * palabrasPorFila + i / 64] |= (1ULL << (i % 64));
 }
 
-bool MatrizAmistad::sonAmigos(int i, int j) const {
+bool MatrizAmistad::sonAmigos(int i, int j) const
+{
     if (!indiceValido(i) || !indiceValido(j))
     {
         return false;
