@@ -10,6 +10,7 @@ SOURCES += \
     main.cpp \
     matrizamistad.cpp \
     solicitudamistad.cpp \
+    udeabook.cpp \
     usuario.cpp
 
 HEADERS += \
@@ -19,4 +20,5 @@ HEADERS += \
     listadinamica.h \
     matrizamistad.h \
     solicitudamistad.h \
+    udeabook.h \
     usuario.h
