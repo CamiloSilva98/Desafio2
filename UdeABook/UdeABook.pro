@@ -10,13 +10,10 @@ SOURCES += \
     foto.cpp \
     main.cpp \
     matrizamistad.cpp \
-<<<<<<< Updated upstream
-    solicitudamistad.cpp
-=======
     mensaje.cpp \
     solicitudamistad.cpp \
+    udeabook.cpp \
     usuario.cpp
->>>>>>> Stashed changes
 
 HEADERS += \
     album.h \
@@ -25,10 +22,7 @@ HEADERS += \
     foto.h \
     listadinamica.h \
     matrizamistad.h \
-<<<<<<< Updated upstream
-    solicitudamistad.h
-=======
     mensaje.h \
     solicitudamistad.h \
+    udeabook.h \
     usuario.h
->>>>>>> Stashed changes
