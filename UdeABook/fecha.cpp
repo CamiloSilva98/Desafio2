@@ -1,8 +1,7 @@
 #include "fecha.h"
 #include <iostream>
 // Constructor parametrizado con inicializadores
-//Fecha::Fecha() : anio(0), mes(1), dia(1), hora(0) {}
-Fecha::Fecha(unsigned int anio, unsigned int mes, unsigned int dia, unsigned int hora)
+Fecha::Fecha(unsigned int dia, unsigned int mes, unsigned int anio, unsigned int hora)
     : Anio(anio), Mes(mes), Dia(dia), Hora(hora) {}
 // se empaqueta en formato AAAAMMDDHH
 unsigned long long Fecha::convertirAEntero() const {
