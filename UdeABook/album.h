@@ -13,11 +13,33 @@ public:
 private:
     std::string nombre;
     std::string ruta;
-    Privacidad Privacidad;
+    Privacidad privacidad;
     ListaDinamica<Foto> fotos; //fotos del album
 public:
-
+    //constructor por defecto. Queda PRIVADO para que, si algo falla al cargar, nunca se muestre por error.
     Album();
+    Album(const std::string& nombre, const std::string& ruta, Privacidad privacidad);
+
+    //agregar foto al final del album
+    void agregarFoto(const Foto& foto);
+    // Carrusel: muestra una foto a la vez y deja ir a la siguiente/previa de forma circular
+    // dar/quitar like, o salir. Devuelve las iteraciones usadas (Funcionalidad VII).
+    // IMPORTANTE: debe llamarse sobre el album original (no sobre una copia),
+    // porque los likes se guardan en las fotos de este objeto.
+    long verCarrusel();
+
+    //TRUE si un amigo del dueño puede ver el album
+    bool esVsisibleParaAmigo() const;
+
+    //GETTERS
+    const std::string& getNombre() const;
+    const std::string& getRuta() const;
+    Privacidad getPrivacidad() const;
+    int getCantidadFotos() const;
+    const Foto& getFoto(int indice) const;   // sirve para guardar los likes en el archivo
+
+    // Bytes que ocupa el album (objeto + arreglo de fotos + textos), para MedidorRecursos.
+    long memoriaBytes() const;
 };
 
 #endif // ALBUM_H
