@@ -33,7 +33,7 @@ long Album::verCarrusel(){
     while(!salir){
         iteraciones++; //cada vuelta del carrusel  = accion de usuario
         Foto& actual = fotos[posicion];
-        cout<<"\n album \""<<nombre << "\" - Foto" <<(posicion+1) << "de "<<total<<endl;
+        cout<<"\n--- Album \""<<nombre << "\" - Foto " <<(posicion+1) << " de "<<total<<" ---"<<endl;
         cout<<"Ruta:  "<<actual.getRuta()<<endl;
         cout << "Fecha:  " << actual.getFechaFoto().getDia() << "/"
              << actual.getFechaFoto().getMes() << "/"
@@ -46,7 +46,7 @@ long Album::verCarrusel(){
         cout<<endl;
         cout << "1. Siguiente  2. Previa  3. Dar/quitar like  0. Salir del album\n";
         cout << "Opcion: ";
-        int opcion;
+        int opcion=-1;
         if(!(cin>>opcion)){
             if(cin.eof()){
                 opcion = 0;

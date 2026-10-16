@@ -1,15 +1,17 @@
 #include "fecha.h"
 #include <iostream>
 // Constructor parametrizado con inicializadores
-Fecha::Fecha(unsigned int dia, unsigned int mes, unsigned int anio, unsigned int hora)
-    : Anio(anio), Mes(mes), Dia(dia), Hora(hora) {}
-// se empaqueta en formato AAAAMMDDHH
+Fecha::Fecha(unsigned int dia, unsigned int mes, unsigned int anio, unsigned int hora, unsigned int minuto)
+    : Anio(anio), Mes(mes), Dia(dia), Hora(hora), Minuto(minuto) {}
+// se empaqueta en formato AAAAMMDDHHMM
 unsigned long long Fecha::convertirAEntero() const {
-    return (static_cast<unsigned long long>(Anio) * 1000000) +
-           (Mes * 10000) +
-           (Dia * 100) +
-           Hora;
+    return Anio * 100000000ULL +
+           Mes * 1000000ULL +
+           Dia * 10000ULL +
+           Hora * 100ULL +
+           Minuto;
 }
+
 
 // Sobrecarga del operador de menor que (<)
 bool Fecha::operator<(const Fecha& otra) const {
@@ -18,13 +20,14 @@ bool Fecha::operator<(const Fecha& otra) const {
 // Sobrecarga del operador de igualdad (==)
 bool Fecha ::operator==(const Fecha& otra )const{
     //comprivar si fecha es igual a 'otra'
-    return(Anio==otra.Anio && Mes==otra.Mes && Dia==otra.Dia && Hora==otra.Hora );
+    return(Anio==otra.Anio && Mes==otra.Mes && Dia==otra.Dia && Hora==otra.Hora&& Minuto==otra.Minuto);
 }
 //metodos de acceso
 unsigned int Fecha::getAnio() const{return Anio; }
 unsigned int Fecha::getMes() const{return Mes; }
 unsigned int Fecha::getDia() const{return Dia; }
 unsigned int Fecha::getHora() const{return Hora; }
+unsigned int Fecha::getMinuto() const{return Minuto; }
 void Fecha::setDia(unsigned int nuevoDia) {
     // Validación básica: los días deben estar entre 1 y 31
     if (nuevoDia >= 1 && nuevoDia <= 31) {
@@ -58,5 +61,13 @@ void Fecha::setHora(unsigned int nuevaHora) {
         Hora = nuevaHora;
     } else {
         std::cout << "Error: Hora invalida (" << nuevaHora << "). Debe estar entre 0 y 23.\n";
+    }
+}
+void Fecha::setMinuto(unsigned int nuevoMinuto) {
+    // Los minutos van de 0 a 59
+    if (nuevoMinuto <= 59) {
+        Minuto = nuevoMinuto;
+    } else {
+        std::cout << "Error: Minuto invalido (" << nuevoMinuto << "). Debe estar entre 0 y 59.\n";
     }
 }
