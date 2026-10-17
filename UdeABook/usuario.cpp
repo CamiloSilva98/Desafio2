@@ -1,7 +1,7 @@
-#include "usuario.h"
-#include "album.h"
-#include "mensaje.h"
-#include "solicitudAmistad.h"
+#include "Usuario.h"
+#include "Album.h"
+#include "Mensaje.h"
+#include "SolicitudAmistad.h"
 #include <cstdlib>
 
 Usuario::Usuario(const std::string& nombreUsuario, const std::string& contrasenia,
@@ -52,9 +52,9 @@ const ListaDinamica<Mensaje*>& Usuario::getRecibidos() const { return recibidos;
 const ListaDinamica<SolicitudAmistad*>& Usuario::getSolicitudes() const { return solicitudes; }
 const ListaDinamica<Usuario*>& Usuario::getAmigos() const { return amigos; }
 
-//void Usuario::agregarAlbum(Album* album) { albumes.agregar(album); }
-//void Usuario::agregarEnviado(Mensaje* mensaje) { enviados.agregar(mensaje); }
-//void Usuario::agregarRecibido(Mensaje* mensaje) { recibidos.agregar(mensaje); }
+void Usuario::agregarAlbum(Album* album) { albumes.agregar(album); }
+void Usuario::agregarEnviado(Mensaje* mensaje) { enviados.agregar(mensaje); }
+void Usuario::agregarRecibido(Mensaje* mensaje) { recibidos.agregar(mensaje); }
 void Usuario::agregarAmigo(Usuario* amigo) { amigos.agregar(amigo); }
 
 int Usuario::amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz) const
@@ -229,4 +229,10 @@ ListaDinamica<Usuario*> Usuario::elegirAmigosAleatorio(const MatrizAmistad& matr
     delete[] vetado;
     delete[] actuales;
     return elegidos;
+}
+// Ordena enviados y recibidos por fecha de envio (llama a ListaDinamica::ordenarCronologicamente).
+// Devuelve las iteraciones usadas, para MedidorRecursos.
+long Usuario::ordenarMensajes()
+{
+    return enviados.ordenarCronologicamente() + recibidos.ordenarCronologicamente();
 }

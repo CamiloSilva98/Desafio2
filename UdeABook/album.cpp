@@ -22,7 +22,6 @@ long Album::verCarrusel(){
     //para dar o quitar like:
     // meGusta[i] recuerda, solo durante esta visita, si ya se dio like a la foto i.
     // Asi "quitar" solo deshace el like propio y nunca borra likes de otras personas.
-    // (El enunciado no pide validar un like por usuario, por eso no se guarda mas.)
     bool* meGusta = new bool[total];
     for (int i =0; i < total ; i++){
         meGusta[i] = false;
@@ -82,7 +81,7 @@ long Album::verCarrusel(){
     delete[]meGusta;
     return iteraciones;
 }
-bool Album::esVsisibleParaAmigo() const{
+bool Album::esVisibleParaAmigo() const{
     return privacidad != PRIVADO;
 }
 const string& Album::getNombre() const{return nombre;}

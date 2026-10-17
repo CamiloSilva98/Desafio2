@@ -3,7 +3,8 @@
 
 #include "fecha.h"
 #include <string>
-class Usuario;
+#include <usuario.h>
+
 class Mensaje
 {
 public:
