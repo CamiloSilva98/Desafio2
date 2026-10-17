@@ -27,6 +27,16 @@ private:
 
     // dibuja las fotos de perfil de amigos, el saludo y el menu principal
     void mostrarPantallaInicio(const Usuario* usuario, const ListaDinamica<Usuario*>& amigosMostrados) const;
+    // opcion 3 del menu: pide K, muestra las sugerencias y deja enviar solicitudes
+    void menuSugerencias(Usuario* usuario);
+
+    // opcion 1 del menu: enviar solicitudes y aceptar las recibidas
+    void menuAmistades(Usuario* usuario);
+    void enviarSolicitudPorNombre(Usuario* usuario);
+    void menuAceptarSolicitudes(Usuario* usuario);
+
+    // avisa por consola lo que paso al intentar enviar una solicitud
+    void mostrarResultadoSolicitud(Usuario::ResultadoSolicitud resultado, const Usuario* destino) const;
 
 public:
     UdeaBook();
@@ -47,6 +57,10 @@ public:
     Usuario* pedirSesion() const;
     // pantalla de inicio y menu principal del usuario; termina cuando escribe S
     void ejecutarSesion(Usuario* usuario);
+
+    // hasta k amigos de amigos (que no son amigos ni el mismo usuario) con mas amigos en comun,
+    // de mayor a menor; en enComun queda la cantidad de amigos en comun de cada uno
+    ListaDinamica<Usuario*> sugerirAmigos(const Usuario* usuario, int k, ListaDinamica<int>& enComun) const;
 
     int getNumUsuarios() const;
     Usuario* getUsuario(int indice) const;
