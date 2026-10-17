@@ -45,7 +45,8 @@ int main()
             opcion.erase(opcion.size() - 1);
         }
 
-        if (opcion == "1") {
+        if (opcion == "1")
+        {
             Usuario* usuario = app.pedirSesion();
             if (usuario != nullptr)
             {

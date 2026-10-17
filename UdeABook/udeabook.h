@@ -68,8 +68,13 @@ public:
 
     const std::string& getSubRuta() const;
 
+    std::string carpetaDatos;
+
     // arma la ruta completa de una ruta relativa: subRuta + "/" + relativa
     std::string rutaCompleta(const std::string& relativa) const;
+
+    // guarda en archivos las amistades, solicitudes, mensajes y likes (ver GuardadorDatos)
+    bool guardarTodo() const;
 };
 
 #endif
