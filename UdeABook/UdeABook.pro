@@ -8,6 +8,7 @@ SOURCES += \
     cargadordatos.cpp \
     fecha.cpp \
     foto.cpp \
+    guardadordatos.cpp \
     main.cpp \
     matrizamistad.cpp \
     medidorrecursos.cpp \
@@ -21,6 +22,7 @@ HEADERS += \
     cargadordatos.h \
     fecha.h \
     foto.h \
+    guardadordatos.h \
     listadinamica.h \
     matrizamistad.h \
     medidorrecursos.h \

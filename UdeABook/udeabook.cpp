@@ -1,5 +1,7 @@
 #include "udeaBook.h"
 #include "SolicitudAmistad.h"
+#include "cargadordatos.h"
+#include "guardadordatos.h"
 #include <fstream>
 #include <iostream>
 
@@ -70,20 +72,21 @@ bool aEntero(const std::string& texto, long long& valor)
     return true;
 }
 
-// convierte AAAAMMDDHH en una Fecha validando mes, dia (con bisiestos) y hora
+// convierte AAAAMMDDHHMM en una Fecha validando mes, dia (con bisiestos) y hora
 bool aFecha(const std::string& texto, Fecha& fecha)
 {
     long long valor;
-    if (texto.size() != 10 || !aEntero(texto, valor))
+    if (texto.size() != 12 || !aEntero(texto, valor))
     {
         return false;
     }
-    int anio = (int)(valor / 1000000);
-    int mes = (int)((valor / 10000) % 100);
-    int dia = (int)((valor / 100) % 100);
-    int hora = (int)(valor % 100);
+    int anio = (int)(valor / 100000000);
+    int mes = (int)((valor / 1000000) % 100);
+    int dia = (int)((valor / 10000) % 100);
+    int hora = (int)((valor / 100) % 100);
+    int minutos =(int)(valor % 100);
 
-    if (anio < 1 || mes < 1 || mes > 12 || hora > 23)
+    if (anio < 1 || mes < 1 || mes > 12 || hora > 23 || minutos > 59)
     {
         return false;
     }
@@ -98,7 +101,7 @@ bool aFecha(const std::string& texto, Fecha& fecha)
     {
         return false;
     }
-    fecha = Fecha(dia, mes, anio, hora);
+    fecha = Fecha(dia, mes, anio, hora, minutos);
     return true;
 }
 
@@ -162,12 +165,23 @@ bool UdeaBook::cargarDatos(const std::string& carpeta)
 {
     liberar();
     std::string base = carpeta.empty() ? "" : carpeta + "/";
+    carpetaDatos = base;
 
     if (!cargarConfig(base + "config.txt") ||
         !cargarUsuarios(base + "usuarios.txt") ||
         !cargarAmistades(base + "amistades.txt") ||
-        !cargarSolicitudes(base + "solicitudes.txt"))
-    {
+        !cargarSolicitudes(base + "solicitudes.txt")) {
+        liberar();
+        return false;
+    }
+
+    // albumes, fotos y mensajes los lee CargadorDatos; los albumes van antes que las fotos
+    CargadorDatos cargador(subRuta);
+    long iteraciones = 0;   // por ahora no se usa, despues lo recibe el medidor
+    if (cargador.cargarAlbumes(base + "albums.txt", *this, iteraciones) < 0 ||
+        cargador.cargarFotos(base + "fotos.txt", *this, iteraciones) < 0 ||
+        cargador.cargarMensajes(base + "mensajes.txt", *this, iteraciones) < 0) {
+        std::cerr << "No se pudo abrir albums.txt, fotos.txt o mensajes.txt en \"" << carpeta << "\"" << std::endl;
         liberar();
         return false;
     }
@@ -474,13 +488,16 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
         if (!leerOpcion(opcion))
         {
             std::cout << std::endl;
+            guardarTodo();
             return;
         }
-
-        if (opcion == "S" || opcion == "s") {
+        if (opcion == "S" || opcion == "s")
+        {
+            guardarTodo();
             std::cout << "Sesion cerrada." << std::endl;
             return;
-        } else if (opcion == "N" || opcion == "n")
+        }
+        else if (opcion == "N" || opcion == "n")
         {
             if (yaCambio)
             {
@@ -812,6 +829,19 @@ Usuario* UdeaBook::getUsuario(int indice) const
 MatrizAmistad& UdeaBook::getMatriz()
 {
     return *matriz;
+}
+
+bool UdeaBook::guardarTodo() const
+{
+    bool bien = GuardadorDatos::guardarAmistades(carpetaDatos + "amistades.txt", *this);
+    bien = GuardadorDatos::guardarSolicitudes(carpetaDatos + "solicitudes.txt", *this) && bien;
+    bien = GuardadorDatos::guardarMensajes(carpetaDatos + "mensajes.txt", *this) && bien;
+    bien = GuardadorDatos::guardarFotos(carpetaDatos + "fotos.txt", *this) && bien;
+    if (!bien)
+    {
+        std::cerr << "No se pudieron guardar todos los archivos en \"" << carpetaDatos << "\"" << std::endl;
+    }
+    return bien;
 }
 
 const std::string& UdeaBook::getSubRuta() const
