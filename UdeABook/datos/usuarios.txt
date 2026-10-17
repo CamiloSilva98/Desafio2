@@ -1,5 +1,5 @@
 1000
-usuario0001|clave0001|usuario0001@udea.edu.co|Cali|Colombia|usuario0001/albums/profile.png|1999052723|2026022011
+camilo|camilo1|camilo@udea.edu.co|Cali|Colombia|camilo/albums/profile.png|1999052723|2026022011
 usuario0002|clave0002|usuario0002@udea.edu.co|Medellin|Colombia|usuario0002/albums/profile.png|2008080618|2026041601
 usuario0003|clave0003|usuario0003@udea.edu.co|Manizales|Colombia|usuario0003/albums/profile.png|1999041809|2024041621
 usuario0004|clave0004|usuario0004@udea.edu.co|Cucuta|Colombia|usuario0004/albums/profile.png|1971101319|2023031107

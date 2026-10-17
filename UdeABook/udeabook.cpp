@@ -1,8 +1,11 @@
 #include "udeaBook.h"
+#include "SolicitudAmistad.h"
 #include <fstream>
 #include <iostream>
 
-namespace {
+
+namespace
+{
 
 // lee una linea y le quita el \r que dejan los archivos hechos en Windows
 bool leerLinea(std::ifstream& archivo, std::string& linea)
@@ -109,16 +112,20 @@ void advertencia(const std::string& archivo, int linea, const char* motivo)
     std::cerr << "Aviso en " << archivo << ", linea " << linea << " (se omite): " << motivo << std::endl;
 }
 
-bool leerOpcion(std::string& opcion) {
-    if (!std::getline(std::cin, opcion)) {
+bool leerOpcion(std::string& opcion)
+{
+    if (!std::getline(std::cin, opcion))
+    {
         return false;
     }
     std::string::size_type inicio = 0;
     std::string::size_type fin = opcion.size();
-    while (inicio < fin && (opcion[inicio] == ' ' || opcion[inicio] == '\t')) {
+    while (inicio < fin && (opcion[inicio] == ' ' || opcion[inicio] == '\t'))
+    {
         inicio++;
     }
-    while (fin > inicio && (opcion[fin - 1] == ' ' || opcion[fin - 1] == '\t' || opcion[fin - 1] == '\r')) {
+    while (fin > inicio && (opcion[fin - 1] == ' ' || opcion[fin - 1] == '\t' || opcion[fin - 1] == '\r'))
+    {
         fin--;
     }
     opcion = opcion.substr(inicio, fin - inicio);
@@ -130,7 +137,8 @@ bool leerOpcion(std::string& opcion) {
 
 UdeaBook::UdeaBook() : matriz(new MatrizAmistad(0)) {}
 
-UdeaBook::~UdeaBook() {
+UdeaBook::~UdeaBook()
+{
     for (int i = 0; i < usuarios.getCantidad(); i++)
     {
         delete usuarios[i];
@@ -337,7 +345,8 @@ bool UdeaBook::cargarSolicitudes(const std::string& ruta)
         }
         int emisor = buscarIndice(campos[0]);
         int receptor = buscarIndice(campos[1]);
-        if (emisor < 0 || receptor < 0) {
+        if (emisor < 0 || receptor < 0)
+        {
             advertencia(ruta, numLinea, "algun usuario no existe");
             continue;
         }
@@ -424,14 +433,16 @@ Usuario* UdeaBook::pedirSesion() const
 void UdeaBook::mostrarPantallaInicio(const Usuario* usuario, const ListaDinamica<Usuario*>& amigosMostrados) const
 {
     std::cout << std::endl;
-    if (amigosMostrados.estaVacia()) {
+    if (amigosMostrados.estaVacia())
+    {
         std::cout << "Aun no tienes amigos para mostrar." << std::endl;
     }
-    for (int i = 0; i < amigosMostrados.getCantidad(); i++) {
+    for (int i = 0; i < amigosMostrados.getCantidad(); i++)
+    {
         std::cout << "Foto perfil de amigo " << (i + 1) << ": "
                   << rutaCompleta(amigosMostrados[i]->getRutaFotoPerfil()) << std::endl;
     }
-    std::cout << std::endl << "Bienvenido a UdeaBook " << usuario->getNombreUsuario() << std::endl << std::endl;
+    std::cout << std::endl << "Bienvenido a UdeaBook " << usuario->getNombreUsuario() << "\n\n";
     std::cout << "Menu de opciones:" << std::endl << std::endl
               << "1.- Administrar amistades" << std::endl
               << "2.- Visitar perfil de un amigo" << std::endl
@@ -460,7 +471,8 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
         std::cout << "Su opcion: ";
 
         std::string opcion;
-        if (!leerOpcion(opcion)) {
+        if (!leerOpcion(opcion))
+        {
             std::cout << std::endl;
             return;
         }
@@ -468,26 +480,317 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
         if (opcion == "S" || opcion == "s") {
             std::cout << "Sesion cerrada." << std::endl;
             return;
-        } else if (opcion == "N" || opcion == "n") {
-            if (yaCambio) {
+        } else if (opcion == "N" || opcion == "n")
+        {
+            if (yaCambio)
+            {
                 aviso = "Las fotos de perfil de amigos solo se pueden actualizar una vez.";
-            } else if (usuario->getAmigos().estaVacia()) {
+            }
+            else if (usuario->getAmigos().estaVacia()) {
                 aviso = "Aun no tienes amigos, no hay fotos para actualizar.";
-            } else {
+            }
+            else
+            {
                 // el nuevo grupo no repite las fotos del anterior (si hay amigos suficientes)
                 fotos = usuario->elegirAmigosAleatorio(*matriz, fotos);
                 yaCambio = true;
             }
-        } else if (opcion == "1") {
-            aviso = "Administrar amistades: todavia no esta disponible.";
-        } else if (opcion == "2") {
+        }
+        else if (opcion == "1")
+        {
+            menuAmistades(usuario);
+        }
+        else if (opcion == "2")
+        {
             aviso = "Visitar perfil de un amigo: todavia no esta disponible.";
-        } else if (opcion == "3") {
-            aviso = "Ver sugerencias de amistad: todavia no esta disponible.";
-        } else if (opcion == "4") {
+        }
+        else if (opcion == "3")
+        {
+            menuSugerencias(usuario);
+        }
+        else if (opcion == "4")
+        {
             aviso = "Administrar mensajes: todavia no esta disponible.";
-        } else {
+        }
+        else
+        {
             aviso = "Opcion no valida.";
+        }
+    }
+}
+
+ListaDinamica<Usuario*> UdeaBook::sugerirAmigos(const Usuario* usuario, int k, ListaDinamica<int>& enComun) const
+{
+    ListaDinamica<Usuario*> sugeridos;
+    enComun.vaciar();
+    int n = usuarios.getCantidad();
+    if (k < 1 || n == 0)
+    {
+        return sugeridos;
+    }
+
+    // un contador por usuario: al final cuenta cuantos amigos en comun tiene con este usuario
+    int* contadores = new int[n];
+    for (int i = 0; i < n; i++)
+    {
+        contadores[i] = 0;
+    }
+
+    int yo = usuario->getIndice();
+    const ListaDinamica<Usuario*>& misAmigos = usuario->getAmigos();
+    for (int a = 0; a < misAmigos.getCantidad(); a++)
+    {
+        const ListaDinamica<Usuario*>& susAmigos = misAmigos[a]->getAmigos();
+        for (int b = 0; b < susAmigos.getCantidad(); b++)
+        {
+            int candidato = susAmigos[b]->getIndice();
+            // no cuentan el mismo usuario ni los que ya son sus amigos
+            if (candidato != yo && !matriz->sonAmigos(yo, candidato))
+            {
+                contadores[candidato]++;
+            }
+        }
+    }
+
+    // arreglo pequeno de tamano k ordenado de mayor a menor: cada candidato se inserta
+    // en su lugar y el menor sale, asi no se ordena toda la lista
+    int* mejores = new int[k];
+    int* valores = new int[k];
+    int llenos = 0;
+    for (int c = 0; c < n; c++)
+    {
+        if (contadores[c] == 0)
+        {
+            continue;
+        }
+        if (llenos == k && contadores[c] <= valores[k - 1])
+        {
+            continue;
+        }
+        int pos = (llenos < k) ? llenos : k - 1;
+        // se corren los que tienen menos amigos en comun; con empate queda primero el que ya estaba
+        while (pos > 0 && valores[pos - 1] < contadores[c])
+        {
+            mejores[pos] = mejores[pos - 1];
+            valores[pos] = valores[pos - 1];
+            pos--;
+        }
+        mejores[pos] = c;
+        valores[pos] = contadores[c];
+        if (llenos < k)
+        {
+            llenos++;
+        }
+    }
+
+    for (int i = 0; i < llenos; i++)
+    {
+        sugeridos.agregar(usuarios[mejores[i]]);
+        enComun.agregar(valores[i]);
+    }
+
+    delete[] contadores;
+    delete[] mejores;
+    delete[] valores;
+    return sugeridos;
+}
+
+void UdeaBook::mostrarResultadoSolicitud(Usuario::ResultadoSolicitud resultado, const Usuario* destino) const
+{
+    const std::string& nombre = destino->getNombreUsuario();
+    switch (resultado)
+    {
+    case Usuario::SOLICITUD_ENVIADA:
+        std::cout << "Solicitud enviada a " << nombre << "." << std::endl;
+        break;
+    case Usuario::SOLICITUD_A_SI_MISMO:
+        std::cout << "No puedes enviarte una solicitud a ti mismo." << std::endl;
+        break;
+    case Usuario::SOLICITUD_YA_AMIGOS:
+        std::cout << "Ya eres amigo de " << nombre << "." << std::endl;
+        break;
+    case Usuario::SOLICITUD_YA_RECIBIDA:
+        std::cout << nombre << " ya te envio una solicitud, puedes aceptarla en Administrar amistades." << std::endl;
+        break;
+    case Usuario::SOLICITUD_YA_ENVIADA:
+        std::cout << "Ya le enviaste una solicitud a " << nombre << "." << std::endl;
+        break;
+    }
+}
+
+void UdeaBook::menuAmistades(Usuario* usuario)
+{
+    while (true) {
+        std::cout << std::endl << "Administrar amistades" << std::endl
+                  << "1.- Enviar solicitud de amistad" << std::endl
+                  << "2.- Aceptar solicitudes de amistad recibidas" << std::endl
+                  << "0.- Volver" << std::endl << std::endl
+                  << "Su opcion: ";
+
+        std::string opcion;
+        if (!leerOpcion(opcion))
+        {
+            std::cout << std::endl;
+            return;
+        }
+        if (opcion == "1")
+        {
+            enviarSolicitudPorNombre(usuario);
+        }
+        else if (opcion == "2")
+        {
+            menuAceptarSolicitudes(usuario);
+        }
+        else if (opcion == "0")
+        {
+            return;
+        }
+        else
+        {
+            std::cout << "Opcion no valida." << std::endl;
+        }
+    }
+}
+
+void UdeaBook::enviarSolicitudPorNombre(Usuario* usuario)
+{
+    std::cout << "Nombre de usuario al que desea enviar la solicitud (Enter para volver): ";
+    std::string nombre;
+    if (!leerOpcion(nombre))
+    {
+        std::cout << std::endl;
+        return;
+    }
+    if (nombre.empty())
+    {
+        return;
+    }
+
+    Usuario* destino = buscarUsuario(nombre);
+    if (destino == nullptr)
+    {
+        std::cout << "El usuario " << nombre << " no existe." << std::endl;
+        return;
+    }
+    // enviarSolicitud revisa las reglas: a si mismo, amigos y solicitudes pendientes
+    mostrarResultadoSolicitud(usuario->enviarSolicitud(destino, *matriz), destino);
+}
+
+void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
+{
+    while (true)
+    {
+        // la lista se vuelve a leer en cada vuelta porque al aceptar una se borra
+        const ListaDinamica<SolicitudAmistad*>& pendientes = usuario->getSolicitudes();
+        if (pendientes.estaVacia())
+        {
+            std::cout << "No tienes solicitudes de amistad pendientes." << std::endl;
+            return;
+        }
+
+        std::cout << std::endl << "Solicitudes de amistad recibidas:" << std::endl;
+        for (int i = 0; i < pendientes.getCantidad(); i++)
+        {
+            std::cout << (i + 1) << ".- "
+                      << usuarios[pendientes[i]->getIndiceEmisor()]->getNombreUsuario() << std::endl;
+        }
+        std::cout << std::endl << "Numero de la solicitud que desea aceptar (0 para volver): ";
+
+        std::string texto;
+        long long valor;
+        if (!leerOpcion(texto))
+        {
+            std::cout << std::endl;
+            return;
+        }
+        if (aEntero(texto, valor) && valor <= pendientes.getCantidad())
+        {
+            if (valor == 0)
+            {
+                return;
+            }
+            int posicion = (int)valor - 1;
+            Usuario* emisor = usuarios[pendientes[posicion]->getIndiceEmisor()];
+            if (usuario->aceptarSolicitud(posicion, emisor, *matriz))
+            {
+                std::cout << "Ahora eres amigo de " << emisor->getNombreUsuario() << "." << std::endl;
+            }
+            else
+            {
+                std::cout << "No se pudo aceptar la solicitud." << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Opcion no valida." << std::endl;
+        }
+    }
+}
+
+void UdeaBook::menuSugerencias(Usuario* usuario)
+{
+    std::string texto;
+    long long valor;
+
+    // se pide K entre 1 y 20
+    int k = 0;
+    while (true)
+    {
+        std::cout << "Cuantas sugerencias desea ver (1 a 20, 0 para volver): ";
+        if (!leerOpcion(texto))
+        {
+            std::cout << std::endl;
+            return;
+        }
+        if (aEntero(texto, valor) && valor <= 20)
+        {
+            if (valor == 0)
+            {
+                return;
+            }
+            k = (int)valor;
+            break;
+        }
+        std::cout << "Valor no valido, debe estar entre 1 y 20." << std::endl;
+    }
+
+    ListaDinamica<int> enComun;
+    ListaDinamica<Usuario*> sugeridos = sugerirAmigos(usuario, k, enComun);
+    if (sugeridos.estaVacia())
+    {
+        std::cout << "Por ahora no hay sugerencias de amistad." << std::endl;
+        return;
+    }
+
+    std::cout << std::endl << "Sugerencias de amistad:" << std::endl;
+    for (int i = 0; i < sugeridos.getCantidad(); i++)
+    {
+        std::cout << (i + 1) << ".- " << sugeridos[i]->getNombreUsuario() << " (" << enComun[i]
+                  << (enComun[i] == 1 ? " amigo en comun)" : " amigos en comun)") << std::endl;
+    }
+    std::cout << std::endl;
+
+    // se puede enviar solicitud a las que quiera, hasta que escriba 0
+    while (true)
+    {
+        std::cout << "Numero de la sugerencia a la que desea enviar solicitud (0 para volver): ";
+        if (!leerOpcion(texto))
+        {
+            std::cout << std::endl;
+            return;
+        }
+        if (aEntero(texto, valor) && valor <= sugeridos.getCantidad())
+        {
+            if (valor == 0)
+            {
+                return;
+            }
+            Usuario* destino = sugeridos[(int)valor - 1];
+            mostrarResultadoSolicitud(usuario->enviarSolicitud(destino, *matriz), destino);
+        }
+        else
+        {
+            std::cout << "Opcion no valida." << std::endl;
         }
     }
 }
