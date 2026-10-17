@@ -1,4 +1,4 @@
-#include "SolicitudAmistad.h"
+#include "solicitudamistad.h"
 
 SolicitudAmistad::SolicitudAmistad(int indiceEmisor, int indiceReceptor)
     : indiceEmisor(indiceEmisor), indiceReceptor(indiceReceptor) {}

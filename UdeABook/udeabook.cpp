@@ -1,4 +1,4 @@
-#include "UdeaBook.h"
+#include "udeaBook.h"
 #include <fstream>
 #include <iostream>
 
@@ -108,6 +108,23 @@ void advertencia(const std::string& archivo, int linea, const char* motivo)
 {
     std::cerr << "Aviso en " << archivo << ", linea " << linea << " (se omite): " << motivo << std::endl;
 }
+
+bool leerOpcion(std::string& opcion) {
+    if (!std::getline(std::cin, opcion)) {
+        return false;
+    }
+    std::string::size_type inicio = 0;
+    std::string::size_type fin = opcion.size();
+    while (inicio < fin && (opcion[inicio] == ' ' || opcion[inicio] == '\t')) {
+        inicio++;
+    }
+    while (fin > inicio && (opcion[fin - 1] == ' ' || opcion[fin - 1] == '\t' || opcion[fin - 1] == '\r')) {
+        fin--;
+    }
+    opcion = opcion.substr(inicio, fin - inicio);
+    return true;
+}
+
 
 }
 
@@ -402,6 +419,77 @@ Usuario* UdeaBook::pedirSesion() const
         std::cout << "Usuario o contrasena incorrectos (intento " << intento << " de 3)" << std::endl;
     }
     return nullptr;
+}
+
+void UdeaBook::mostrarPantallaInicio(const Usuario* usuario, const ListaDinamica<Usuario*>& amigosMostrados) const
+{
+    std::cout << std::endl;
+    if (amigosMostrados.estaVacia()) {
+        std::cout << "Aun no tienes amigos para mostrar." << std::endl;
+    }
+    for (int i = 0; i < amigosMostrados.getCantidad(); i++) {
+        std::cout << "Foto perfil de amigo " << (i + 1) << ": "
+                  << rutaCompleta(amigosMostrados[i]->getRutaFotoPerfil()) << std::endl;
+    }
+    std::cout << std::endl << "Bienvenido a UdeaBook " << usuario->getNombreUsuario() << std::endl << std::endl;
+    std::cout << "Menu de opciones:" << std::endl << std::endl
+              << "1.- Administrar amistades" << std::endl
+              << "2.- Visitar perfil de un amigo" << std::endl
+              << "3.- Ver sugerencias de amistad" << std::endl
+              << "4.- Administrar mensajes" << std::endl << std::endl
+              << ".- Ingrese 'N' o 'n' para alternar el grupo de fotos de perfil de amigos." << std::endl
+              << ".- Ingrese 'S' o 's' para cerrar su sesion." << std::endl << std::endl;
+}
+
+void UdeaBook::ejecutarSesion(Usuario* usuario)
+{
+    // el grupo de fotos se elige una vez y se conserva mientras dure la sesion
+    ListaDinamica<Usuario*> sinExcluir;
+    ListaDinamica<Usuario*> fotos = usuario->elegirAmigosAleatorio(*matriz, sinExcluir);
+    bool yaCambio = false;
+    std::string aviso;
+
+    while (true)
+    {
+        mostrarPantallaInicio(usuario, fotos);
+        if (!aviso.empty())
+        {
+            std::cout << aviso << std::endl;
+            aviso = "";
+        }
+        std::cout << "Su opcion: ";
+
+        std::string opcion;
+        if (!leerOpcion(opcion)) {
+            std::cout << std::endl;
+            return;
+        }
+
+        if (opcion == "S" || opcion == "s") {
+            std::cout << "Sesion cerrada." << std::endl;
+            return;
+        } else if (opcion == "N" || opcion == "n") {
+            if (yaCambio) {
+                aviso = "Las fotos de perfil de amigos solo se pueden actualizar una vez.";
+            } else if (usuario->getAmigos().estaVacia()) {
+                aviso = "Aun no tienes amigos, no hay fotos para actualizar.";
+            } else {
+                // el nuevo grupo no repite las fotos del anterior (si hay amigos suficientes)
+                fotos = usuario->elegirAmigosAleatorio(*matriz, fotos);
+                yaCambio = true;
+            }
+        } else if (opcion == "1") {
+            aviso = "Administrar amistades: todavia no esta disponible.";
+        } else if (opcion == "2") {
+            aviso = "Visitar perfil de un amigo: todavia no esta disponible.";
+        } else if (opcion == "3") {
+            aviso = "Ver sugerencias de amistad: todavia no esta disponible.";
+        } else if (opcion == "4") {
+            aviso = "Administrar mensajes: todavia no esta disponible.";
+        } else {
+            aviso = "Opcion no valida.";
+        }
+    }
 }
 
 int UdeaBook::getNumUsuarios() const

@@ -1,7 +1,7 @@
-#include "Usuario.h"
-#include "Album.h"
-//#include "Mensaje.h"
-#include "SolicitudAmistad.h"
+#include "usuario.h"
+#include "album.h"
+#include "mensaje.h"
+#include "solicitudAmistad.h"
 #include <cstdlib>
 
 Usuario::Usuario(const std::string& nombreUsuario, const std::string& contrasenia,
@@ -21,7 +21,7 @@ Usuario::~Usuario()
     }
     for (int i = 0; i < enviados.getCantidad(); i++)
     {
-        //delete enviados[i];
+        delete enviados[i];
     }
     for (int i = 0; i < solicitudes.getCantidad(); i++)
     {
