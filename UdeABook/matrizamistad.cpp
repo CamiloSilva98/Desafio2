@@ -1,4 +1,4 @@
-#include "MatrizAmistad.h"
+#include "matrizamistad.h"
 
 // solicitud pendiente entre dos usuarios; guarda la posicion de cada uno
 // en el arreglo de usuarios (la misma que usa la matriz de amistad)

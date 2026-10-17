@@ -25,6 +25,9 @@ private:
     bool cargarAmistades(const std::string& ruta);
     bool cargarSolicitudes(const std::string& ruta);
 
+    // dibuja las fotos de perfil de amigos, el saludo y el menu principal
+    void mostrarPantallaInicio(const Usuario* usuario, const ListaDinamica<Usuario*>& amigosMostrados) const;
+
 public:
     UdeaBook();
     ~UdeaBook();
@@ -42,6 +45,8 @@ public:
 
     // pide las credenciales por consola con maximo 3 intentos
     Usuario* pedirSesion() const;
+    // pantalla de inicio y menu principal del usuario; termina cuando escribe S
+    void ejecutarSesion(Usuario* usuario);
 
     int getNumUsuarios() const;
     Usuario* getUsuario(int indice) const;
