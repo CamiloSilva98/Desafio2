@@ -146,7 +146,7 @@ public:
             int j = i - 1;
 
             // mientras el de la izquierda sea mayor, se corre una posicion a la derecha
-            while (j >= 0 && clave < datos[j])
+            while (j >= 0 && *clave < *datos[j])
             {
                 iteraciones++;       // vuelta del while
                 datos[j + 1] = datos[j];
@@ -155,23 +155,6 @@ public:
             datos[j + 1] = clave;
         }
         return iteraciones;
-    }
-
-    // Busca un elemento idéntico mediante búsqueda lineal
-    // Retorna el índice si lo encuentra, o -1 si no existe.
-    int buscarElemento(const T& objetivo, long& iteracionesFuera) const
-    {
-        iteracionesFuera = 0;
-        for (int i = 0; i < cantidad; i++)
-        {
-            iteracionesFuera++;
-            // Se apoya en el operador == que sobrecargamos en la clase Fecha
-            if (datos[i] == objetivo)
-            {
-                return i; // Encontrado
-            }
-        }
-        return -1; // No encontrado
     }
 };
 

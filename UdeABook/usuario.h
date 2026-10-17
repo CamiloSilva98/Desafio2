@@ -86,6 +86,7 @@ public:
     void agregarEnviado(Mensaje* mensaje);
     void agregarRecibido(Mensaje* mensaje);
     void agregarAmigo(Usuario* amigo);
+    long ordenarMensajes();
 
     // amigos que tiene en comun con otro usuario
     int amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz) const;

@@ -29,7 +29,7 @@ public:
     long verCarrusel();
 
     //TRUE si un amigo del dueño puede ver el album
-    bool esVsisibleParaAmigo() const;
+    bool esVisibleParaAmigo() const;
 
     //GETTERS
     const std::string& getNombre() const;

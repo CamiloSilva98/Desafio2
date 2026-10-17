@@ -82,7 +82,7 @@ long Album::verCarrusel(){
     delete[]meGusta;
     return iteraciones;
 }
-bool Album::esVsisibleParaAmigo() const{
+bool Album::esVisibleParaAmigo() const{
     return privacidad != PRIVADO;
 }
 const string& Album::getNombre() const{return nombre;}
