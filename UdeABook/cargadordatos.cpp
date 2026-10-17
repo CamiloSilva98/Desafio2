@@ -63,7 +63,19 @@ bool fechaDesdeTexto(const string& texto, Fecha& resultado)
     unsigned int anio = (unsigned int)(numero / 100000000);
 
     // El constructor de Fecha no valida, asi que se revisan los rangos aqui
-    if (anio == 0 || mes < 1 || mes > 12 || dia < 1 || dia > 31 || hora > 23 || minuto > 59)
+    if (anio == 0 || mes < 1 || mes > 12 || hora > 23 || minuto > 59)
+    {
+        return false;
+    }
+    // Dias de cada mes. Febrero tiene 29 solo en los anios bisiestos
+    // (divisible entre 4, pero los de siglo solo si lo son entre 400).
+    unsigned int diasDelMes[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    unsigned int maximo = diasDelMes[mes - 1];
+    if (mes == 2 && ((anio % 4 == 0 && anio % 100 != 0) || anio % 400 == 0))
+    {
+        maximo = 29;
+    }
+    if (dia < 1 || dia > maximo)
     {
         return false;
     }
@@ -127,7 +139,7 @@ int CargadorDatos::cargarAlbumes(const string& archivo, const UdeaBook& platafor
 
     int cargados = 0;
     string linea;
-    while (getline(entrada, linea)) //lee una linea completa del archivo y la guarda en "linea".
+    while (leerLinea(entrada, linea)) //lee una linea completa del archivo y la guarda en "linea".
     {
         iteraciones++;                       // una vuelta por linea leida
         if (linea.empty())
@@ -154,8 +166,15 @@ int CargadorDatos::cargarAlbumes(const string& archivo, const UdeaBook& platafor
             continue;                        // el dueño del album no existe
         }
 
-        // Ruta del album: /users/<subRuta>/<usuario>/albums/<album>  (como en el enunciado)
-        string rutaAlbum = "/users/" + subRuta + "/" + nombreUsuario + "/albums/" + nombreAlbum;
+        // Dos albumes del mismo usuario no pueden llamarse igual (las fotos buscan su album por el nombre)
+        if (buscarAlbum(dueno, nombreAlbum, iteraciones) != 0)
+        {
+            continue;
+        }
+
+        // Ruta del album: <subRuta>/<usuario>/albums/<album>
+        // subRuta ya trae el "/users/..." completo, tal como esta en config.txt
+        string rutaAlbum = subRuta + "/" + nombreUsuario + "/albums/" + nombreAlbum;
 
         // El album se crea con new porque Usuario guarda PUNTEROS a sus albumes y es quien los borra en su destructor
         // El numero del archivo (0, 1, 2) coincide con los valores del enum Album::Privacidad.
@@ -175,7 +194,7 @@ int CargadorDatos::cargarFotos(const string& archivo, const UdeaBook& plataforma
 
     int cargadas = 0;
     string linea;
-    while (getline(entrada, linea))
+    while (leerLinea(entrada, linea))
     {
         iteraciones++;                       // una vuelta por linea leida
         if (linea.empty())
@@ -233,7 +252,7 @@ int CargadorDatos::cargarMensajes(const string& archivo, const UdeaBook& platafo
 
     int cargados = 0;
     string linea;
-    while (getline(entrada, linea))
+    while (leerLinea(entrada, linea))
     {
         iteraciones++;                       // una vuelta por linea leida
         if (linea.empty())

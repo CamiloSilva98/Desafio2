@@ -25,10 +25,6 @@ public:
     CargadorDatos(const std::string& subRuta);
 
     // Los tres devuelven cuantos registros se cargaron bien, o -1 si el archivo no se pudo abrir.
-    // Una linea danada (campos que faltan, numero invalido, usuario inexistente...) se ignora:
-    // asi un solo error no impide cargar todo lo demas.
-    // "iteraciones" se SUMA a lo que traiga: cuenta 1 por cada linea leida y 1 por cada vuelta
-    // de las busquedas. Sirve para MedidorRecursos
     int cargarAlbumes(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones);
     int cargarFotos(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones);
     int cargarMensajes(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones);

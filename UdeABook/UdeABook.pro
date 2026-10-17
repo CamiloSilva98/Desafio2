@@ -10,6 +10,7 @@ SOURCES += \
     foto.cpp \
     main.cpp \
     matrizamistad.cpp \
+    medidorrecursos.cpp \
     mensaje.cpp \
     solicitudamistad.cpp \
     udeabook.cpp \
@@ -22,6 +23,7 @@ HEADERS += \
     foto.h \
     listadinamica.h \
     matrizamistad.h \
+    medidorrecursos.h \
     mensaje.h \
     solicitudamistad.h \
     udeabook.h \

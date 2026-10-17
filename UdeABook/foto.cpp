@@ -12,8 +12,6 @@ void Foto::darLike()
 {
     likes++;
 }
-// Resta un like. Como likes es unsigned, restar desde 0 daria un numero enorme,
-// por eso se valida antes.
 void Foto::quitarLike()
 {
     if (likes > 0)
