@@ -1,7 +1,7 @@
 #include "usuario.h"
-#include "Album.h"
-#include "Mensaje.h"
-#include "SolicitudAmistad.h"
+#include "album.h"
+#include "mensaje.h"
+#include "solicitudamistad.h"
 #include <cstdlib>
 
 Usuario::Usuario(const std::string& nombreUsuario, const std::string& contrasenia,
@@ -62,10 +62,11 @@ int Usuario::amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz) con
     return matriz.contarEnComun(indice, otro.indice);
 }
 
-bool Usuario::tieneSolicitudDe(const Usuario* origen) const
+bool Usuario::tieneSolicitudDe(const Usuario* origen, long& iteraciones) const
 {
     for (int i = 0; i < solicitudes.getCantidad(); i++)
     {
+        iteraciones++;
         if (solicitudes[i]->getIndiceEmisor() == origen->indice)
         {
             return true;
@@ -74,7 +75,7 @@ bool Usuario::tieneSolicitudDe(const Usuario* origen) const
     return false;
 }
 
-Usuario::ResultadoSolicitud Usuario::enviarSolicitud(Usuario* destino, const MatrizAmistad& matriz)
+Usuario::ResultadoSolicitud Usuario::enviarSolicitud(Usuario* destino, const MatrizAmistad& matriz, long& iteraciones)
 {
     if (destino == this)
     {
@@ -85,12 +86,12 @@ Usuario::ResultadoSolicitud Usuario::enviarSolicitud(Usuario* destino, const Mat
         return SOLICITUD_YA_AMIGOS;
     }
     // el otro ya me habia enviado una solicitud
-    if (tieneSolicitudDe(destino))
+    if (tieneSolicitudDe(destino, iteraciones))
     {
         return SOLICITUD_YA_RECIBIDA;
     }
     // yo ya le habia enviado una solicitud
-    if (destino->tieneSolicitudDe(this))
+    if (destino->tieneSolicitudDe(this, iteraciones))
     {
         return SOLICITUD_YA_ENVIADA;
     }
@@ -130,6 +131,20 @@ bool Usuario::eliminarSolicitud(int i)
     return solicitudes.eliminar(i);
 }
 
+bool Usuario::rechazarSolicitud(int i, Usuario* emisor)
+{
+    if (emisor == 0 || i < 0 || i >= solicitudes.getCantidad())
+    {
+        return false;
+    }
+    // la solicitud tiene que ser de ese emisor
+    if (solicitudes[i]->getIndiceEmisor() != emisor->indice)
+    {
+        return false;
+    }
+    return eliminarSolicitud(i);
+}
+
 // pesos 2, 5 y 7 mantienen la proporcion 1 : 2.5 : 3.5 sin usar decimales
 int Usuario::pesoPrioridad(int enComun)
 {
@@ -145,11 +160,12 @@ int Usuario::pesoPrioridad(int enComun)
 }
 
 // ruleta: devuelve la posicion elegida o -1 si todos los pesos son 0
-int Usuario::elegirPonderado(const int* pesos, int n)
+int Usuario::elegirPonderado(const int* pesos, int n, long& iteraciones)
 {
     int total = 0;
     for (int i = 0; i < n; i++)
     {
+        iteraciones++;
         total += pesos[i];
     }
     if (total == 0)
@@ -160,6 +176,7 @@ int Usuario::elegirPonderado(const int* pesos, int n)
     int acumulado = 0;
     for (int i = 0; i < n; i++)
     {
+        iteraciones++;
         acumulado += pesos[i];
         if (r < acumulado)
         {
@@ -170,11 +187,11 @@ int Usuario::elegirPonderado(const int* pesos, int n)
 }
 
 // saca amigos por ruleta hasta tener 3; el elegido queda con peso 0 para no repetirse
-void Usuario::sortearGrupo(int* pesos, int n, ListaDinamica<Usuario*>& elegidos) const
+void Usuario::sortearGrupo(int* pesos, int n, ListaDinamica<Usuario*>& elegidos, long& iteraciones) const
 {
     while (elegidos.getCantidad() < 3)
     {
-        int k = elegirPonderado(pesos, n);
+        int k = elegirPonderado(pesos, n, iteraciones);
         if (k == -1)
         {
             break;
@@ -185,7 +202,7 @@ void Usuario::sortearGrupo(int* pesos, int n, ListaDinamica<Usuario*>& elegidos)
 }
 
 ListaDinamica<Usuario*> Usuario::elegirAmigosAleatorio(const MatrizAmistad& matriz,
-                                                        const ListaDinamica<Usuario*>& excluidos) const
+                                                        const ListaDinamica<Usuario*>& excluidos, long& iteraciones) const
 {
     ListaDinamica<Usuario*> elegidos;
     int n = amigos.getCantidad();
@@ -213,7 +230,7 @@ ListaDinamica<Usuario*> Usuario::elegirAmigosAleatorio(const MatrizAmistad& matr
     }
 
     // primero entre los que no se han mostrado
-    sortearGrupo(actuales, n, elegidos);
+    sortearGrupo(actuales, n, elegidos, iteraciones);
 
     // si faltan, se completa con los que ya se habian mostrado
     if (elegidos.getCantidad() < 3)
@@ -222,7 +239,7 @@ ListaDinamica<Usuario*> Usuario::elegirAmigosAleatorio(const MatrizAmistad& matr
         {
             actuales[i] = vetado[i] ? pesos[i] : 0;
         }
-        sortearGrupo(actuales, n, elegidos);
+        sortearGrupo(actuales, n, elegidos, iteraciones);
     }
 
     delete[] pesos;

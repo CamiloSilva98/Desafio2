@@ -92,7 +92,7 @@ public:
 
     // hasta k amigos de amigos (que no son amigos ni el mismo usuario) con mas amigos en comun,
     // de mayor a menor; en enComun queda la cantidad de amigos en comun de cada uno
-    ListaDinamica<Usuario*> sugerirAmigos(const Usuario* usuario, int k, ListaDinamica<int>& enComun) const;
+    ListaDinamica<Usuario*> sugerirAmigos(const Usuario* usuario, int k, ListaDinamica<int>& enComun, long& iteraciones) const;
 
     int getNumUsuarios() const;
     Usuario* getUsuario(int indice) const;

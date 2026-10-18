@@ -64,6 +64,7 @@ camilo|usuario0015|202610131116|0|Feliz cumpleanos!
 camilo|usuario0049|202610131151|1|Feliz cumpleanos!
 camilo|usuario0044|202610151036|0|Hola, como estas?
 camilo|usuario0050|202610162303|0|Viste las fotos?
+camilo|usuario0026|202610180809|0|Si, estaban geniales, me hubiera gustado ir pero ya que jajajajaja :( para la proxima me avisas con mas tiempo para organizarme mejor ;)
 usuario0002|usuario0025|202608212341|1|Hola, como estas?
 usuario0002|usuario0031|202608250623|1|Hola, como estas?
 usuario0002|usuario0007|202608252058|1|Buen dia
@@ -507,7 +508,7 @@ usuario0026|usuario0006|202610060425|0|Te llamo luego
 usuario0026|usuario0492|202610091248|1|Mira este paseo
 usuario0026|usuario0034|202610120021|1|Gracias por todo
 usuario0026|usuario0021|202610132040|1|Viste las fotos?
-usuario0026|camilo|202610161816|0|Viste las fotos?
+usuario0026|camilo|202610161816|1|Viste las fotos?
 usuario0027|camilo|202608211115|1|Nos vemos manana
 usuario0027|usuario0012|202608221241|1|Gracias por todo
 usuario0027|camilo|202608270029|1|Mira este paseo
@@ -721,7 +722,7 @@ usuario0039|usuario0047|202609300059|1|Gracias por todo
 usuario0039|usuario0010|202609302048|1|Nos vemos manana
 usuario0039|usuario0010|202610020522|1|Feliz cumpleanos!
 usuario0039|usuario0071|202610110359|1|Ya llegue
-usuario0039|camilo|202610132220|0|Te llamo luego
+usuario0039|camilo|202610132220|1|Te llamo luego
 usuario0040|usuario0016|202608281410|1|Nos vemos manana
 usuario0040|usuario0034|202608302241|1|Ya llegue
 usuario0040|usuario0046|202608311225|1|Hola, como estas?
@@ -838,7 +839,7 @@ usuario0046|usuario0027|202609211858|1|Viste las fotos?
 usuario0046|usuario0029|202609230007|1|Gracias por todo
 usuario0046|usuario0017|202609262200|1|Buen dia
 usuario0046|usuario0018|202609272004|1|Nos vemos manana
-usuario0046|camilo|202610012110|0|Nos vemos manana
+usuario0046|camilo|202610012110|1|Nos vemos manana
 usuario0046|usuario0043|202610051156|1|Nos vemos manana
 usuario0046|usuario0040|202610061144|0|Que hacemos el sabado?
 usuario0046|usuario0029|202610082249|1|Hola, como estas?
@@ -864,7 +865,7 @@ usuario0048|usuario0032|202609100125|1|Que hacemos el sabado?
 usuario0048|usuario0015|202609100458|1|Viste las fotos?
 usuario0048|usuario0040|202609130519|1|Mira este paseo
 usuario0048|usuario0010|202609300044|1|Buen dia
-usuario0048|camilo|202610060027|0|Nos vemos manana
+usuario0048|camilo|202610060027|1|Nos vemos manana
 usuario0048|usuario0041|202610060312|0|Te llamo luego
 usuario0049|usuario0038|202608211319|1|Mira este paseo
 usuario0049|usuario0031|202608211645|1|Feliz cumpleanos!
@@ -5299,7 +5300,7 @@ usuario0485|usuario0492|202610071633|0|Te llamo luego
 usuario0486|usuario0468|202609121204|1|Gracias por todo
 usuario0486|usuario0660|202609270543|1|Buen dia
 usuario0486|usuario0491|202610080441|0|Feliz cumpleanos!
-usuario0486|camilo|202610110030|0|Ya llegue
+usuario0486|camilo|202610110030|1|Ya llegue
 usuario0487|usuario0480|202608200558|1|Buen dia
 usuario0487|usuario0462|202608211642|1|Mira este paseo
 usuario0487|usuario0484|202608300751|1|Ya llegue
@@ -7795,7 +7796,7 @@ usuario0753|usuario0375|202608222059|1|Gracias por todo
 usuario0753|usuario0751|202608302014|1|Ya llegue
 usuario0753|camilo|202609191854|1|Hola, como estas?
 usuario0753|usuario0755|202610020615|1|Mira este paseo
-usuario0753|camilo|202610060734|0|Mira este paseo
+usuario0753|camilo|202610060734|1|Mira este paseo
 usuario0754|usuario0182|202608201544|1|Nos vemos manana
 usuario0754|usuario0765|202608240606|1|Viste las fotos?
 usuario0754|usuario0485|202608240713|1|Buen dia

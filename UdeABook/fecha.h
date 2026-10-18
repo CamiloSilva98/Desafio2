@@ -1,6 +1,8 @@
 #ifndef FECHA_H
 #define FECHA_H
 
+#include <iosfwd>
+
 class Fecha{
 private:
     unsigned int Anio;
@@ -29,6 +31,10 @@ public:
     void setAnio(unsigned int nuevoAnio);
     void setHora(unsigned int nuevaHora);
     void setMinuto(unsigned int nuevoMinuto);
+
+    // FUNCION AMIGA: no es un metodo de Fecha, pero puede leer sus atributos privados.
+    // Imprime la fecha como dd/mm/aaaa hh:mm (con ceros a la izquierda) en cualquier flujo de salida.
+    friend std::ostream& operator<<(std::ostream& salida, const Fecha& fecha);
 };
 
 #endif // FECHA_H

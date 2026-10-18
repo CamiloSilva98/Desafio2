@@ -57,9 +57,11 @@ private:
     Usuario(const Usuario&) = delete;
     Usuario& operator=(const Usuario&) = delete;
 
+
     static int pesoPrioridad(int enComun);
-    static int elegirPonderado(const int* pesos, int n);
-    void sortearGrupo(int* pesos, int n, ListaDinamica<Usuario*>& elegidos) const;
+    // las dos SUMAN a "iteraciones" las vueltas de sus ciclos (para medidorrecursos)
+    static int elegirPonderado(const int* pesos, int n, long& iteraciones);
+    void sortearGrupo(int* pesos, int n, ListaDinamica<Usuario*>& elegidos, long& iteraciones) const;
 
 public:
     Usuario(const std::string& nombreUsuario, const std::string& contrasenia,
@@ -101,10 +103,10 @@ public:
     int amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz) const;
 
     // revisa si ya hay una solicitud recibida de ese usuario
-    bool tieneSolicitudDe(const Usuario* origen) const;
+    bool tieneSolicitudDe(const Usuario* origen, long& iteraciones) const;
 
     // valida las reglas y, si todo esta bien, deja la solicitud en el receptor
-    ResultadoSolicitud enviarSolicitud(Usuario* destino, const MatrizAmistad& matriz);
+    ResultadoSolicitud enviarSolicitud(Usuario* destino, const MatrizAmistad& matriz, long& iteraciones);
 
     // acepta la solicitud de la posicion i, que debe ser de ese emisor: prende la matriz,
     // deja a cada uno en la lista de amigos del otro y borra la solicitud
@@ -112,6 +114,7 @@ public:
 
     // borra la solicitud de la posicion i (despues de aceptarla o rechazarla)
     bool eliminarSolicitud(int i);
+    bool rechazarSolicitud(int i, Usuario* emisor);
 
     // valida las reglas (solo a amigos, texto de 1 a 512 caracteres) y, si todo esta bien,
     // crea UN mensaje y lo deja en enviados del emisor y en recibidos del destino, en orden
@@ -122,7 +125,7 @@ public:
     // hasta 3 amigos al azar con prioridad segun amigos en comun;
     // los de la lista excluidos solo salen si no alcanzan los demas
     ListaDinamica<Usuario*> elegirAmigosAleatorio(const MatrizAmistad& matriz,
-                                                   const ListaDinamica<Usuario*>& excluidos) const;
+                                                   const ListaDinamica<Usuario*>& excluidos,long& iteraciones) const;
 };
 
 #endif

@@ -1,5 +1,16 @@
 #include "fecha.h"
 #include <iostream>
+#include <iomanip>
+
+std::ostream& operator<<(std::ostream& salida, const Fecha& fecha)
+{
+    char relleno = salida.fill('0');   // se guarda el relleno anterior para devolverlo despues
+    salida << std::setw(2) << fecha.Dia << "/" << std::setw(2) << fecha.Mes << "/" << fecha.Anio
+           << " " << std::setw(2) << fecha.Hora << ":" << std::setw(2) << fecha.Minuto;
+    salida.fill(relleno);
+    return salida;
+}
+
 // Constructor parametrizado con inicializadores
 Fecha::Fecha(unsigned int dia, unsigned int mes, unsigned int anio, unsigned int hora, unsigned int minuto)
     : Anio(anio), Mes(mes), Dia(dia), Hora(hora), Minuto(minuto) {}
