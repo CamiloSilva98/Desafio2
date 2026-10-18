@@ -2,6 +2,7 @@
 #define UDEABOOK_H
 
 #include <string>
+#include <chrono>
 #include "ListaDinamica.h"
 #include "MatrizAmistad.h"
 #include "Usuario.h"
@@ -9,11 +10,31 @@
 // clase principal: carga los datos, busca usuarios e inicia sesion
 class UdeaBook
 {
+public:
+    // archivos que pueden cambiar mientras el programa corre
+    enum ArchivoDatos
+    {
+        ARCHIVO_AMISTADES,
+        ARCHIVO_SOLICITUDES,
+        ARCHIVO_MENSAJES,
+        ARCHIVO_FOTOS,
+        NUM_ARCHIVOS
+    };
 private:
     // ordenados por nombre; la posicion de cada uno es su indice en la matriz
     ListaDinamica<Usuario*> usuarios;
     MatrizAmistad* matriz;
+
     std::string subRuta;
+    std::string carpetaDatos;
+
+    // politica de guardado: los cambios importantes se guardan de inmediato y los menores al
+    // llegar a MAX_CAMBIOS_MENORES o a MAX_SEGUNDOS_SIN_GUARDAR desde el primero sin guardar
+    static const int MAX_CAMBIOS_MENORES = 10;
+    static const int MAX_SEGUNDOS_SIN_GUARDAR = 120;
+    bool archivoSucio[NUM_ARCHIVOS];     // true si el archivo cambio y falta guardarlo
+    int cambiosMenores;                  // cambios menores sin guardar
+    std::chrono::steady_clock::time_point primerCambioMenor;   // hora del primero de ellos
 
     // la plataforma es duena de los usuarios y de la matriz, no se copia
     UdeaBook(const UdeaBook&) = delete;
@@ -67,14 +88,21 @@ public:
     MatrizAmistad& getMatriz();
 
     const std::string& getSubRuta() const;
+    const std::string& getcarpeta() const;
 
-    std::string carpetaDatos;
 
     // arma la ruta completa de una ruta relativa: subRuta + "/" + relativa
     std::string rutaCompleta(const std::string& relativa) const;
 
-    // guarda en archivos las amistades, solicitudes, mensajes y likes (ver GuardadorDatos)
-    bool guardarTodo() const;
+    // avisa que un archivo cambio; si el cambio es importante (critico) se guarda de inmediato
+    void registrarCambio(ArchivoDatos archivo, bool critico);
+
+    // guarda si ya hubo MAX_CAMBIOS_MENORES cambios menores o pasaron MAX_SEGUNDOS_SIN_GUARDAR
+    // desde el primero; se llama despues de cada accion del usuario
+    void revisarGuardado();
+
+    // guarda solo los archivos marcados como modificados (ver GuardadorDatos)
+    bool guardarPendientes();
 };
 
 #endif

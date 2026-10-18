@@ -1,4 +1,4 @@
-#include "Usuario.h"
+#include "usuario.h"
 #include "Album.h"
 #include "Mensaje.h"
 #include "SolicitudAmistad.h"

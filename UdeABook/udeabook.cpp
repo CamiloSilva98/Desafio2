@@ -138,7 +138,13 @@ bool leerOpcion(std::string& opcion)
 
 }
 
-UdeaBook::UdeaBook() : matriz(new MatrizAmistad(0)) {}
+UdeaBook::UdeaBook() : matriz(new MatrizAmistad(0)), cambiosMenores(0)
+{
+    for (int i = 0; i < NUM_ARCHIVOS; i++)
+    {
+        archivoSucio[i] = false;
+    }
+}
 
 UdeaBook::~UdeaBook()
 {
@@ -159,6 +165,10 @@ void UdeaBook::liberar()
     delete matriz;
     matriz = new MatrizAmistad(0);
     subRuta = "";
+    cambiosMenores = 0;
+    for (int i = 0; i < NUM_ARCHIVOS; i++) {
+        archivoSucio[i] = false;
+    }
 }
 
 bool UdeaBook::cargarDatos(const std::string& carpeta)
@@ -476,6 +486,7 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
 
     while (true)
     {
+        revisarGuardado();
         mostrarPantallaInicio(usuario, fotos);
         if (!aviso.empty())
         {
@@ -488,12 +499,12 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
         if (!leerOpcion(opcion))
         {
             std::cout << std::endl;
-            guardarTodo();
+            guardarPendientes();
             return;
         }
         if (opcion == "S" || opcion == "s")
         {
-            guardarTodo();
+            guardarPendientes();
             std::cout << "Sesion cerrada." << std::endl;
             return;
         }
@@ -690,7 +701,12 @@ void UdeaBook::enviarSolicitudPorNombre(Usuario* usuario)
         return;
     }
     // enviarSolicitud revisa las reglas: a si mismo, amigos y solicitudes pendientes
-    mostrarResultadoSolicitud(usuario->enviarSolicitud(destino, *matriz), destino);
+    Usuario::ResultadoSolicitud resultado = usuario->enviarSolicitud(destino, *matriz);
+    mostrarResultadoSolicitud(resultado, destino);
+    if (resultado == Usuario::SOLICITUD_ENVIADA)
+    {
+        registrarCambio(ARCHIVO_SOLICITUDES, true);
+    }
 }
 
 void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
@@ -731,6 +747,10 @@ void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
             if (usuario->aceptarSolicitud(posicion, emisor, *matriz))
             {
                 std::cout << "Ahora eres amigo de " << emisor->getNombreUsuario() << "." << std::endl;
+                // primero amistades y luego solicitudes: si se corta entre los dos, queda una solicitud
+                // de mas (que al cargar se descarta) y no una amistad perdida
+                registrarCambio(ARCHIVO_AMISTADES, true);
+                registrarCambio(ARCHIVO_SOLICITUDES, true);
             }
             else
             {
@@ -803,7 +823,12 @@ void UdeaBook::menuSugerencias(Usuario* usuario)
                 return;
             }
             Usuario* destino = sugeridos[(int)valor - 1];
-            mostrarResultadoSolicitud(usuario->enviarSolicitud(destino, *matriz), destino);
+            Usuario::ResultadoSolicitud resultado = usuario->enviarSolicitud(destino, *matriz);
+            mostrarResultadoSolicitud(resultado, destino);
+            if (resultado == Usuario::SOLICITUD_ENVIADA)
+            {
+                registrarCambio(ARCHIVO_SOLICITUDES, true);
+            }
         }
         else
         {
@@ -831,12 +856,91 @@ MatrizAmistad& UdeaBook::getMatriz()
     return *matriz;
 }
 
-bool UdeaBook::guardarTodo() const
+void UdeaBook::registrarCambio(ArchivoDatos archivo, bool critico)
 {
-    bool bien = GuardadorDatos::guardarAmistades(carpetaDatos + "amistades.txt", *this);
-    bien = GuardadorDatos::guardarSolicitudes(carpetaDatos + "solicitudes.txt", *this) && bien;
-    bien = GuardadorDatos::guardarMensajes(carpetaDatos + "mensajes.txt", *this) && bien;
-    bien = GuardadorDatos::guardarFotos(carpetaDatos + "fotos.txt", *this) && bien;
+    archivoSucio[archivo] = true;
+    if (critico) {
+        // se guarda ya (junto con lo menor que estuviera pendiente)
+        guardarPendientes();
+        return;
+    }
+    // el tiempo se cuenta desde el primer cambio menor que no se ha guardado
+    if (cambiosMenores == 0)
+    {
+        primerCambioMenor = std::chrono::steady_clock::now();
+    }
+    cambiosMenores++;
+    revisarGuardado();
+}
+
+void UdeaBook::revisarGuardado()
+{
+    // sin cambios menores pendientes ni se mira la hora
+    if (cambiosMenores == 0)
+    {
+        return;
+    }
+    long long segundos = std::chrono::duration_cast<std::chrono::seconds>(
+                             std::chrono::steady_clock::now() - primerCambioMenor).count();
+    if (cambiosMenores >= MAX_CAMBIOS_MENORES || segundos >= MAX_SEGUNDOS_SIN_GUARDAR)
+    {
+        guardarPendientes();
+    }
+}
+
+bool UdeaBook::guardarPendientes()
+{
+    bool bien = true;
+
+    // solo se reescriben los archivos marcados; si uno falla queda marcado para el proximo intento
+    if (archivoSucio[ARCHIVO_AMISTADES])
+    {
+        if (GuardadorDatos::guardarAmistades(carpetaDatos + "amistades.txt", *this))
+        {
+            archivoSucio[ARCHIVO_AMISTADES] = false;
+        }
+        else
+        {
+            bien = false;
+        }
+    }
+    if (archivoSucio[ARCHIVO_SOLICITUDES])
+    {
+        if (GuardadorDatos::guardarSolicitudes(carpetaDatos + "solicitudes.txt", *this))
+        {
+            archivoSucio[ARCHIVO_SOLICITUDES] = false;
+        }
+        else
+        {
+            bien = false;
+        }
+    }
+    if (archivoSucio[ARCHIVO_MENSAJES])
+    {
+        if (GuardadorDatos::guardarMensajes(carpetaDatos + "mensajes.txt", *this))
+        {
+            archivoSucio[ARCHIVO_MENSAJES] = false;
+        }
+        else
+        {
+            bien = false;
+        }
+    }
+    if (archivoSucio[ARCHIVO_FOTOS])
+    {
+        if (GuardadorDatos::guardarFotos(carpetaDatos + "fotos.txt", *this))
+        {
+            archivoSucio[ARCHIVO_FOTOS] = false;
+        }
+        else
+        {
+            bien = false;
+        }
+    }
+
+    // el conteo de cambios menores empieza de nuevo aunque algo haya fallado,
+    // asi no se reintenta (ni se avisa del error) despues de cada accion
+    cambiosMenores = 0;
     if (!bien)
     {
         std::cerr << "No se pudieron guardar todos los archivos en \"" << carpetaDatos << "\"" << std::endl;
@@ -847,6 +951,11 @@ bool UdeaBook::guardarTodo() const
 const std::string& UdeaBook::getSubRuta() const
 {
     return subRuta;
+}
+
+const std::string& UdeaBook::getcarpeta() const
+{
+    return carpetaDatos;
 }
 
 std::string UdeaBook::rutaCompleta(const std::string& relativa) const
