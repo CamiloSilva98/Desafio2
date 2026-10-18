@@ -236,3 +236,54 @@ long Usuario::ordenarMensajes()
 {
     return enviados.ordenarCronologicamente() + recibidos.ordenarCronologicamente();
 }
+
+namespace
+{
+// Mete el mensaje en su lugar para que la lista siga ordenada por fecha de envio
+// (la busqueda por rango de fechas necesita la lista ordenada).
+// Casi siempre es el mensaje mas nuevo y queda al final: el ciclo no da ninguna vuelta.
+// Si no, se recorre desde el final hacia atras hasta encontrar donde le toca.
+void insertarOrdenado(ListaDinamica<Mensaje*>& lista, Mensaje* nuevo, long& iteraciones)
+{
+    int posicion = lista.getCantidad();
+    // "*nuevo < *lista[...]" compara las fechas con el operator< de Mensaje (que usa el de Fecha)
+    // el < estricto deja los mensajes con la misma fecha en el orden en que llegaron
+    while (posicion > 0 && *nuevo < *lista[posicion - 1])
+    {
+        posicion--;
+        iteraciones++;
+    }
+    // insertar corre hacia la derecha los mensajes que quedan despues de la posicion: se cuentan
+    iteraciones += lista.getCantidad() - posicion;
+    lista.insertar(posicion, nuevo);
+}
+}
+
+Usuario::ResultadoMensaje Usuario::enviarMensaje(const std::string& texto, Usuario* destino,
+                                                 const MatrizAmistad& matriz, const Fecha& fecha,
+                                                 long& iteraciones)
+{
+    // Solo se le escribe a amigos. La matriz tambien descarta escribirse a uno mismo,
+    // porque nadie es amigo de si mismo.
+    if (destino == 0 || !matriz.sonAmigos(indice, destino->indice))
+    {
+        return MENSAJE_NO_AMIGO;
+    }
+    // no se aceptan mensajes vacios
+    if (texto.empty())
+    {
+        return MENSAJE_VACIO;
+    }
+    // limita el texto a 512 caracteres
+    if (texto.size() > (std::string::size_type)Mensaje::MAX_CARACTERES)
+    {
+        return MENSAJE_MUY_LARGO;
+    }
+    // Se crea UN solo objeto con new: el emisor es el dueno (lo borra en su destructor)
+    // y el receptor guarda el MISMO puntero. Asi el texto no se duplica y el estado
+    // "leido" es uno solo, igual que cuando CargadorDatos lee los mensajes del archivo.
+    Mensaje* nuevo = new Mensaje(this, destino, fecha, false, texto);
+    insertarOrdenado(enviados, nuevo, iteraciones);
+    insertarOrdenado(destino->recibidos, nuevo, iteraciones);
+    return MENSAJE_ENVIADO;
+}

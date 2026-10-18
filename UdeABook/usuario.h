@@ -22,6 +22,15 @@ public:
         SOLICITUD_YA_ENVIADA
     };
 
+    // resultados posibles al intentar enviar un mensaje
+    enum ResultadoMensaje
+    {
+        MENSAJE_ENVIADO,
+        MENSAJE_NO_AMIGO,
+        MENSAJE_VACIO,
+        MENSAJE_MUY_LARGO
+    };
+
 private:
     std::string nombreUsuario;
     std::string contrasenia;
@@ -103,6 +112,12 @@ public:
 
     // borra la solicitud de la posicion i (despues de aceptarla o rechazarla)
     bool eliminarSolicitud(int i);
+
+    // valida las reglas (solo a amigos, texto de 1 a 512 caracteres) y, si todo esta bien,
+    // crea UN mensaje y lo deja en enviados del emisor y en recibidos del destino, en orden
+    // por fecha. "iteraciones" se SUMA a lo que traiga (para medidorrecursos).
+    ResultadoMensaje enviarMensaje(const std::string& texto, Usuario* destino, const MatrizAmistad& matriz,
+                                   const Fecha& fecha, long& iteraciones);
 
     // hasta 3 amigos al azar con prioridad segun amigos en comun;
     // los de la lista excluidos solo salen si no alcanzan los demas

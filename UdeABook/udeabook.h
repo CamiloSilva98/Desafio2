@@ -56,6 +56,15 @@ private:
     void enviarSolicitudPorNombre(Usuario* usuario);
     void menuAceptarSolicitudes(Usuario* usuario);
 
+    // opcion 2 del menu: visitar el perfil de un amigo (sus albumes, carrusel de fotos y likes)
+    void menuVisitarPerfil(Usuario* usuario);
+
+    // opcion 4 del menu: enviar mensaje, leer nuevos y buscar por rango de fechas
+    void menuMensajes(Usuario* usuario);
+    void enviarMensajePorNombre(Usuario* usuario);
+    void leerMensajesNuevos(Usuario* usuario);
+    void buscarMensajesPorFechas(Usuario* usuario);
+
     // avisa por consola lo que paso al intentar enviar una solicitud
     void mostrarResultadoSolicitud(Usuario::ResultadoSolicitud resultado, const Usuario* destino) const;
 
@@ -69,6 +78,8 @@ public:
 
     // busqueda binaria por nombre; devuelve el indice o -1
     int buscarIndice(const std::string& nombre) const;
+    // igual que la anterior, pero SUMA a "iteraciones" las vueltas de la busqueda (para medidorrecursos)
+    int buscarIndice(const std::string& nombre, long& iteraciones) const;
     Usuario* buscarUsuario(const std::string& nombre) const;
 
     // devuelve el usuario si el nombre y la contrasenia coinciden, si no nullptr

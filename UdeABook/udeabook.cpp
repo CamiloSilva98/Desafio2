@@ -2,8 +2,12 @@
 #include "SolicitudAmistad.h"
 #include "cargadordatos.h"
 #include "guardadordatos.h"
+#include "album.h"
+#include "mensaje.h"
+#include "medidorrecursos.h"
 #include <fstream>
 #include <iostream>
+#include <ctime>
 
 
 namespace
@@ -133,6 +137,59 @@ bool leerOpcion(std::string& opcion)
     }
     opcion = opcion.substr(inicio, fin - inicio);
     return true;
+}
+
+// Fecha y hora de ahora, para ponerle fecha de envio a los mensajes nuevos.
+// <ctime> es de la libreria estandar de C++ (la misma que ya se usa para el generador aleatorio).
+Fecha fechaActual()
+{
+    std::time_t ahora = std::time(0);
+    std::tm* local = std::localtime(&ahora);
+    // tm_mon va de 0 a 11 y tm_year cuenta los anios desde 1900, por eso los ajustes
+    return Fecha(local->tm_mday, local->tm_mon + 1, local->tm_year + 1900, local->tm_hour, local->tm_min);
+}
+
+// Convierte un dia escrito como AAAAMMDD (ej: 20260915) en una Fecha. Reutiliza aFecha para
+// validar que la fecha exista (meses, dias de cada mes y bisiestos) y no repetir esa logica.
+// Inicio del rango: 00:00. Fin del rango: 23:59, asi el ultimo dia entra completo
+// (el enunciado pide que las dos fechas sean inclusivas).
+bool fechaDeUnDia(const std::string& texto, bool esFin, Fecha& fecha)
+{
+    if (texto.size() != 8)
+    {
+        return false;
+    }
+    // aFecha espera AAAAMMDDHHMM (12 digitos), por eso se agrega la hora y los minutos
+    return aFecha(texto + (esFin ? "2359" : "0000"), fecha);
+}
+
+// Bytes de un texto local: el objeto string mas su contenido reservado
+long bytesTexto(const std::string& texto)
+{
+    return (long)sizeof(texto) + (long)texto.capacity();
+}
+
+// Suma los likes de todas las fotos de un album. Se usa antes y despues del carrusel para saber
+// si el usuario cambio algun like (si la suma no cambio, no hay nada que guardar).
+long sumaDeLikes(const Album* album, long& iteraciones)
+{
+    long suma = 0;
+    for (int i = 0; i < album->getCantidadFotos(); i++)
+    {
+        iteraciones++;
+        suma += album->getFoto(i).getLikes();
+    }
+    return suma;
+}
+
+// Muestra un mensaje en una linea: fecha, quien lo envio y el texto
+void mostrarMensaje(const Mensaje* mensaje)
+{
+    const Fecha& f = mensaje->getFechaEnvio();
+    std::cout << f.getDia() << "/" << f.getMes() << "/" << f.getAnio() << " "
+              << f.getHora() << ":" << (f.getMinuto() < 10 ? "0" : "") << f.getMinuto()
+              << "  de " << mensaje->getEmisor()->getNombreUsuario()
+              << ": " << mensaje->getTexto() << std::endl;
 }
 
 
@@ -385,10 +442,18 @@ bool UdeaBook::cargarSolicitudes(const std::string& ruta)
 
 int UdeaBook::buscarIndice(const std::string& nombre) const
 {
+    // la version sin contador solo llama a la otra y descarta el conteo
+    long sinContar = 0;
+    return buscarIndice(nombre, sinContar);
+}
+
+int UdeaBook::buscarIndice(const std::string& nombre, long& iteraciones) const
+{
     int bajo = 0;
     int alto = usuarios.getCantidad() - 1;
     while (bajo <= alto)
     {
+        iteraciones++;   // una vuelta de la busqueda binaria
         int medio = bajo + (alto - bajo) / 2;
         const std::string& actual = usuarios[medio]->getNombreUsuario();
         if (actual == nombre)
@@ -530,7 +595,7 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
         }
         else if (opcion == "2")
         {
-            aviso = "Visitar perfil de un amigo: todavia no esta disponible.";
+            menuVisitarPerfil(usuario);
         }
         else if (opcion == "3")
         {
@@ -538,7 +603,7 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
         }
         else if (opcion == "4")
         {
-            aviso = "Administrar mensajes: todavia no esta disponible.";
+            menuMensajes(usuario);
         }
         else
         {
@@ -835,6 +900,386 @@ void UdeaBook::menuSugerencias(Usuario* usuario)
             std::cout << "Opcion no valida." << std::endl;
         }
     }
+}
+
+// ===================================================================================
+// Funcionalidad IV: visitar el perfil de un amigo
+// ===================================================================================
+void UdeaBook::menuVisitarPerfil(Usuario* usuario)
+{
+    std::cout << "Nombre de usuario del amigo (Enter para volver): ";
+    std::string nombre;
+    // si se acaba la entrada (Ctrl+D / fin de archivo) se vuelve en vez de quedarse en un ciclo infinito
+    if (!leerOpcion(nombre))
+    {
+        std::cout << std::endl;
+        return;
+    }
+    // Enter vacio = el usuario se arrepintio; no se ejecuto nada, asi que no se miden recursos
+    if (nombre.empty())
+    {
+        return;
+    }
+
+    medidorrecursos medidor;          // nuevo para esta funcionalidad: arranca en 0
+    long iteraciones = 0;             // vueltas de ciclo; al final se suman al medidor
+    ListaDinamica<Album*> visibles;   // solo punteros a los albumes que el amigo deja ver
+    std::string texto;                // lo que escribe el usuario al elegir el album
+
+    // busqueda binaria del usuario (se cuentan sus vueltas)
+    int posicion = buscarIndice(nombre, iteraciones);
+
+    // Solo se puede visitar a un AMIGO. La matriz de amistad responde en O(1), sin recorrer listas.
+    // Si el nombre no existe o no es amigo, se avisa lo mismo para no revelar quien existe.
+    if (posicion < 0 || !matriz->sonAmigos(usuario->getIndice(), posicion))
+    {
+        std::cout << "No tienes un amigo llamado " << nombre << "." << std::endl;
+    }
+    else
+    {
+        Usuario* amigo = usuarios[posicion];
+
+        // datos del amigo (sin correo ni contrasena, que son privados)
+        std::cout << std::endl << "Perfil de " << amigo->getNombreUsuario() << std::endl
+                  << "Ciudad: " << amigo->getCiudad() << "  Pais: " << amigo->getPais() << std::endl
+                  << "Foto de perfil: " << rutaCompleta(amigo->getRutaFotoPerfil()) << std::endl;
+
+        // Se recorren los albumes UNA sola vez y se guardan los visibles; asi el menu de abajo
+        // no tiene que volver a revisar la privacidad en cada vuelta.
+        // Se usa referencia constante para no copiar la lista del amigo.
+        const ListaDinamica<Album*>& albumes = amigo->getAlbumes();
+        for (int i = 0; i < albumes.getCantidad(); i++)
+        {
+            iteraciones++;
+            // esVisibleParaAmigo es falso solo para los PRIVADOS (los publicos y los de amigos si se ven)
+            if (albumes[i]->esVisibleParaAmigo())
+            {
+                // Se guarda el puntero al album ORIGINAL (no una copia), porque los likes
+                // se escriben en las fotos de ese album y deben conservarse.
+                visibles.agregar(albumes[i]);
+            }
+        }
+
+        bool volver = visibles.estaVacia();
+        if (volver)
+        {
+            std::cout << nombre << " no tiene albumes para mostrar." << std::endl;
+        }
+        // este ciclo se repite hasta que el usuario escriba 0: puede ver varios albumes seguidos
+        while (!volver)
+        {
+            std::cout << std::endl << "Albumes de " << nombre << ":" << std::endl;
+            for (int i = 0; i < visibles.getCantidad(); i++)
+            {
+                iteraciones++;
+                std::cout << (i + 1) << ".- " << visibles[i]->getNombre() << " ("
+                          << visibles[i]->getCantidadFotos() << " fotos, "
+                          << (visibles[i]->getPrivacidad() == Album::PUBLICO ? "publico" : "amigos") << ")" << std::endl;
+            }
+            std::cout << "Numero del album que desea ver (0 para volver): ";
+            long long valor;
+            if (!leerOpcion(texto))
+            {
+                // se acabo la entrada: se sale
+                std::cout << std::endl;
+                volver = true;
+            }
+            // aEntero rechaza letras y numeros negativos; el limite superior es la cantidad de albumes
+            else if (aEntero(texto, valor) && valor <= visibles.getCantidad())
+            {
+                if (valor == 0)
+                {
+                    volver = true;
+                }
+                else
+                {
+                    Album* elegido = visibles[(int)valor - 1];
+
+                    // Likes antes y despues del carrusel: si la suma cambio, el usuario dio o quito
+                    // algun like y hay que avisar que fotos.txt cambio. Si dio y quito el mismo like,
+                    // la suma queda igual y no se guarda nada (no hace falta).
+                    long likesAntes = sumaDeLikes(elegido, iteraciones);
+
+                    // verCarrusel se llama sobre el album ORIGINAL (puntero), y devuelve las vueltas que uso
+                    iteraciones += elegido->verCarrusel();
+
+                    if (sumaDeLikes(elegido, iteraciones) != likesAntes)
+                    {
+                        // un like es un cambio MENOR (false): se guarda al juntar varios o con el tiempo,
+                        // y siempre al cerrar la sesion. No se reescribe fotos.txt por cada like.
+                        registrarCambio(ARCHIVO_FOTOS, false);
+                    }
+                }
+            }
+            else
+            {
+                std::cout << "Opcion no valida." << std::endl;
+            }
+        }
+    }
+
+    // Funcionalidad VII: al terminar se muestran iteraciones y memoria.
+    // bytesLocales = variables locales y parametros por valor de esta funcion.
+    medidor.sumarIteraciones(iteraciones);
+    long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(posicion) + sizeof(usuario))
+                        + bytesTexto(nombre) + bytesTexto(texto) + visibles.memoriaBytes();
+    medidor.calcularMemoria(*this, bytesLocales);
+    medidor.mostrarMetricas();
+}
+
+// ===================================================================================
+// Funcionalidad VI: administrar mensajes
+// ===================================================================================
+void UdeaBook::menuMensajes(Usuario* usuario)
+{
+    // el menu se repite hasta que el usuario elige 0 (Volver)
+    while (true)
+    {
+        std::cout << std::endl << "Administrar mensajes" << std::endl
+                  << "1.- Enviar mensaje" << std::endl
+                  << "2.- Leer nuevos mensajes" << std::endl
+                  << "3.- Buscar mensajes por rango de fechas" << std::endl
+                  << "0.- Volver" << std::endl << std::endl
+                  << "Su opcion: ";
+
+        std::string opcion;
+        if (!leerOpcion(opcion))
+        {
+            std::cout << std::endl;
+            return;
+        }
+        if (opcion == "1")
+        {
+            enviarMensajePorNombre(usuario);
+        }
+        else if (opcion == "2")
+        {
+            leerMensajesNuevos(usuario);
+        }
+        else if (opcion == "3")
+        {
+            buscarMensajesPorFechas(usuario);
+        }
+        else if (opcion == "0")
+        {
+            return;
+        }
+        else
+        {
+            std::cout << "Opcion no valida." << std::endl;
+        }
+    }
+}
+
+void UdeaBook::enviarMensajePorNombre(Usuario* usuario)
+{
+    std::cout << "Nombre del amigo (Enter para volver): ";
+    std::string nombre;
+    if (!leerOpcion(nombre))
+    {
+        std::cout << std::endl;
+        return;
+    }
+    if (nombre.empty())
+    {
+        return;
+    }
+
+    medidorrecursos medidor;
+    long iteraciones = 0;
+    std::string texto;
+
+    int posicion = buscarIndice(nombre, iteraciones);
+    if (posicion < 0)
+    {
+        std::cout << "El usuario " << nombre << " no existe." << std::endl;
+    }
+    // se comprueba la amistad ANTES de pedir el texto, para no hacerle escribir un mensaje que
+    // se va a rechazar (Usuario::enviarMensaje la vuelve a comprobar por seguridad)
+    else if (!matriz->sonAmigos(usuario->getIndice(), posicion))
+    {
+        std::cout << "Solo puedes enviar mensajes a tus amigos." << std::endl;
+    }
+    else
+    {
+        std::cout << "Mensaje (maximo " << Mensaje::MAX_CARACTERES << " caracteres): ";
+        // leerOpcion quita los espacios de los extremos: un mensaje de solo espacios queda vacio y se rechaza
+        if (!leerOpcion(texto))
+        {
+            std::cout << std::endl;
+            return;
+        }
+        // enviarMensaje valida el texto (1 a 512 caracteres), crea el mensaje UNA vez y lo deja
+        // en enviados del emisor y en recibidos del receptor, manteniendo el orden por fecha
+        Usuario::ResultadoMensaje resultado =
+            usuario->enviarMensaje(texto, usuarios[posicion], *matriz, fechaActual(), iteraciones);
+        if (resultado == Usuario::MENSAJE_ENVIADO)
+        {
+            std::cout << "Mensaje enviado a " << nombre << "." << std::endl;
+            // enviar un mensaje es un cambio IMPORTANTE (true): se guarda de inmediato en mensajes.txt
+            registrarCambio(ARCHIVO_MENSAJES, true);
+        }
+        else if (resultado == Usuario::MENSAJE_VACIO)
+        {
+            std::cout << "El mensaje no puede estar vacio." << std::endl;
+        }
+        else if (resultado == Usuario::MENSAJE_MUY_LARGO)
+        {
+            std::cout << "El mensaje es muy largo (" << texto.size() << " caracteres, maximo "
+                      << Mensaje::MAX_CARACTERES << ")." << std::endl;
+        }
+        else
+        {
+            std::cout << "Solo puedes enviar mensajes a tus amigos." << std::endl;
+        }
+    }
+
+    medidor.sumarIteraciones(iteraciones);
+    long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(posicion) + sizeof(usuario))
+                        + bytesTexto(nombre) + bytesTexto(texto);
+    medidor.calcularMemoria(*this, bytesLocales);
+    medidor.mostrarMetricas();
+}
+
+void UdeaBook::leerMensajesNuevos(Usuario* usuario)
+{
+    medidorrecursos medidor;
+    long iteraciones = 0;
+    int nuevos = 0;
+    // Referencia a la lista de recibidos del usuario (no se copia). Ya esta ordenada por fecha de
+    // envio (CargadorDatos la ordena al cargar y enviarMensaje inserta en orden), asi que basta
+    // recorrerla de principio a fin para mostrar los nuevos "ordenados por fecha de envio".
+    const ListaDinamica<Mensaje*>& recibidos = usuario->getRecibidos();
+
+    std::cout << std::endl << "Mensajes nuevos:" << std::endl;
+    // PRIMERO se muestran TODOS los no leidos, indicando el emisor de cada uno
+    for (int i = 0; i < recibidos.getCantidad(); i++)
+    {
+        iteraciones++;
+        if (!recibidos[i]->estaLeido())
+        {
+            mostrarMensaje(recibidos[i]);
+            nuevos++;
+        }
+    }
+    if (nuevos == 0)
+    {
+        std::cout << "No tienes mensajes nuevos." << std::endl;
+    }
+    // DESPUES (como pide el enunciado) se marcan como leidos. Es un segundo ciclo para que ningun
+    // mensaje quede marcado antes de haberse mostrado.
+    for (int i = 0; i < recibidos.getCantidad(); i++)
+    {
+        iteraciones++;
+        if (!recibidos[i]->estaLeido())
+        {
+            recibidos[i]->marcarLeido();
+        }
+    }
+    // marcar como leido es un cambio MENOR (false): se guarda al juntar varios, con el tiempo o
+    // al cerrar sesion. Si no habia nuevos, mensajes.txt no cambio y no se avisa nada.
+    if (nuevos > 0)
+    {
+        registrarCambio(ARCHIVO_MENSAJES, false);
+    }
+
+    medidor.sumarIteraciones(iteraciones);
+    long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(nuevos) + sizeof(usuario)
+                                + sizeof(recibidos));
+    medidor.calcularMemoria(*this, bytesLocales);
+    medidor.mostrarMetricas();
+}
+
+void UdeaBook::buscarMensajesPorFechas(Usuario* usuario)
+{
+    std::string textoInicio;
+    std::string textoFin;
+    Fecha inicio;
+    Fecha fin;
+
+    // Las fechas se piden como AAAAMMDD (ej. 20260915): es simple de escribir y de validar
+    std::cout << "Fecha de inicio AAAAMMDD, ej. 20260915 (Enter para volver): ";
+    if (!leerOpcion(textoInicio))
+    {
+        std::cout << std::endl;
+        return;
+    }
+    if (textoInicio.empty())
+    {
+        return;
+    }
+    if (!fechaDeUnDia(textoInicio, false, inicio))
+    {
+        std::cout << "Fecha de inicio no valida." << std::endl;
+        return;
+    }
+    std::cout << "Fecha de fin AAAAMMDD: ";
+    if (!leerOpcion(textoFin))
+    {
+        std::cout << std::endl;
+        return;
+    }
+    if (!fechaDeUnDia(textoFin, true, fin))
+    {
+        std::cout << "Fecha de fin no valida." << std::endl;
+        return;
+    }
+    // la fecha de inicio no puede ser mayor que la de fin (si no, el rango estaria vacio)
+    if (fin < inicio)
+    {
+        std::cout << "La fecha de inicio no puede ser mayor que la de fin." << std::endl;
+        return;
+    }
+
+    medidorrecursos medidor;
+    long iteraciones = 0;
+    int encontrados = 0;
+    const ListaDinamica<Mensaje*>& recibidos = usuario->getRecibidos();   // ordenada por fecha
+
+    // BUSQUEDA BINARIA: como la lista esta ordenada por fecha, no hace falta revisarla toda.
+    // Se busca la primera posicion cuyo mensaje NO es anterior al inicio (el primero que sea mayor o igual al inicio).
+    // bajo/alto delimitan la zona donde puede estar; cada vuelta descarta la mitad.
+    int bajo = 0;
+    int alto = recibidos.getCantidad();
+    while (bajo < alto)
+    {
+        iteraciones++;
+        int medio = (bajo + alto) / 2;
+        if (recibidos[medio]->getFechaEnvio() < inicio)
+        {
+            bajo = medio + 1;      // este mensaje es anterior al inicio: el primero valido esta mas arriba
+        }
+        else
+        {
+            alto = medio;          // este ya esta dentro o despues: el primero valido es este o uno anterior
+        }
+    }
+
+    // Desde esa posicion se avanza mientras el mensaje NO pase de la fecha fin. Como la lista esta
+    // ordenada, en cuanto uno pasa del fin todos los siguientes tambien: se corta el ciclo.
+    // Ambas fechas son inclusivas: el inicio es 00:00 y el fin 23:59 de su dia.
+    std::cout << std::endl << "Mensajes recibidos entre " << textoInicio << " y " << textoFin << ":" << std::endl;
+    for (int i = bajo; i < recibidos.getCantidad() && !(fin < recibidos[i]->getFechaEnvio()); i++)
+    {
+        iteraciones++;
+        mostrarMensaje(recibidos[i]);
+        encontrados++;
+    }
+    if (encontrados == 0)
+    {
+        std::cout << "No hay mensajes en ese rango." << std::endl;
+    }
+    else
+    {
+        std::cout << encontrados << " mensaje(s) encontrado(s)." << std::endl;
+    }
+
+    medidor.sumarIteraciones(iteraciones);
+    long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(encontrados) + sizeof(bajo)
+                                + sizeof(alto) + sizeof(usuario) + sizeof(recibidos) + sizeof(inicio) + sizeof(fin))
+                        + bytesTexto(textoInicio) + bytesTexto(textoFin);
+    medidor.calcularMemoria(*this, bytesLocales);
+    medidor.mostrarMetricas();
 }
 
 int UdeaBook::getNumUsuarios() const

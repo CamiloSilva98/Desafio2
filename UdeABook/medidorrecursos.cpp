@@ -38,6 +38,12 @@ long memoriaUsuario(const Usuario* usuario){
     }
 }
 medidorrecursos::medidorrecursos(): iteraciones(0), memoriaBytes(0) {}
+// Suma vueltas de ciclo al contador. Cada funcionalidad cuenta sus ciclos en una variable local
+// y al final la suma aqui de una sola vez (sumarIteraciones(total)); sin argumento suma 1.
+void medidorrecursos::sumarIteraciones(long cantidad)
+{
+    iteraciones += cantidad;
+}
 void medidorrecursos::calcularMemoria(UdeaBook& plataforma, long bytesLocales){
     int cantidadUsuarios = plataforma.getNumUsuarios();
     long total = (long)sizeof(UdeaBook);
