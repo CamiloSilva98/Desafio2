@@ -34,9 +34,7 @@ long Album::verCarrusel(){
         Foto& actual = fotos[posicion];
         cout<<"\n--- Album \""<<nombre << "\" - Foto " <<(posicion+1) << " de "<<total<<" ---"<<endl;
         cout<<"Ruta:  "<<actual.getRuta()<<endl;
-        cout << "Fecha:  " << actual.getFechaFoto().getDia() << "/"
-             << actual.getFechaFoto().getMes() << "/"
-             << actual.getFechaFoto().getAnio() << "\n";
+        cout << "Fecha:  " << actual.getFechaFoto() << '\n';
         cout << "Tamano: " << actual.getTamanio() << "\n";
         cout << "Likes:  " << actual.getLikes();
         if (meGusta[posicion]){
