@@ -26,7 +26,8 @@ public:
     // dar/quitar like, o salir. Devuelve las iteraciones usadas
     // IMPORTANTE: debe llamarse sobre el album original (no sobre una copia),
     // porque los likes se guardan en las fotos de este objeto.
-    long verCarrusel();
+    // indiceUsuario = quien visita el album (para saber si ya dio like a cada foto)
+    long verCarrusel(int indiceUsuario);
 
     //TRUE si un amigo del dueño puede ver el album
     bool esVisibleParaAmigo() const;

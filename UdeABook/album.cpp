@@ -10,7 +10,7 @@ Album::Album(const string& nombre, const string& ruta, Privacidad privacidad)
 void Album::agregarFoto(const Foto& foto){
     fotos.agregar(foto);
 }
-long Album::verCarrusel(){
+long Album::verCarrusel(int indiceUsuario){
     long iteraciones = 0;
     int total= fotos.getCantidad();
 
@@ -19,14 +19,9 @@ long Album::verCarrusel(){
         cout<<"el album "<<nombre<< " no tiene fotos"<<endl;
         return iteraciones;
     }
-    //para dar o quitar like:
-    // meGusta[i] recuerda, solo durante esta visita, si ya se dio like a la foto i.
-    // Asi "quitar" solo deshace el like propio y nunca borra likes de otras personas.
-    bool* meGusta = new bool[total];
-    for (int i =0; i < total ; i++){
-        meGusta[i] = false;
-        iteraciones++;
-    }
+    // Para dar o quitar like ya no se usa un arreglo local: cada Foto recuerda quien dio el ultimo
+    // like (leDioLike). Asi, al salir del album y volver a entrar, el like propio se sigue viendo
+    // y "dar like" otra vez lo quita en vez de seguir sumando.
     int posicion = 0; //indice de la foto que se esta viendo
     bool salir = false;
     while(!salir){
@@ -37,8 +32,8 @@ long Album::verCarrusel(){
         cout << "Fecha:  " << actual.getFechaFoto() << '\n';
         cout << "Tamano: " << actual.getTamanio() << "\n";
         cout << "Likes:  " << actual.getLikes();
-        if (meGusta[posicion]){
-            cout<<"(incluye tu like)";
+        if (actual.leDioLike(indiceUsuario)){
+            cout<<" (incluye tu like)";
         }
         cout<<endl;
         cout << "1. Siguiente  2. Previa  3. Dar/quitar like  0. Salir del album\n";
@@ -63,12 +58,11 @@ long Album::verCarrusel(){
             posicion = (posicion -1 + total)% total;
         }
         else if (opcion == 3){
-            if (meGusta[posicion]){
-                actual.quitarLike();
-                meGusta[posicion] =false;
+            // si ya es mi like se quita; si no, se da. Quitar nunca borra likes de otras personas.
+            if (actual.leDioLike(indiceUsuario)){
+                actual.quitarLike(indiceUsuario);
             }else{
-                actual.darLike();
-                meGusta[posicion] = true;
+                actual.darLike(indiceUsuario);
             }
         }
         else{
@@ -76,7 +70,6 @@ long Album::verCarrusel(){
         }
     }
 
-    delete[]meGusta;
     return iteraciones;
 }
 bool Album::esVisibleParaAmigo() const{

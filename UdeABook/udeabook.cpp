@@ -869,7 +869,10 @@ void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
                         if (usuario->aceptarSolicitud(posicion, emisor, *matriz))
                         {
                             std::cout << "Ahora eres amigo de " << emisor->getNombreUsuario() << "." << std::endl;
-                            registrarCambio(ARCHIVO_AMISTADES, true);
+                            // la amistad es menor (false); la solicitud aceptada si es importante (true) y,
+                            // como guardarPendientes escribe todo lo pendiente, amistades.txt se guarda
+                            // junto con ella (los dos archivos quedan consistentes)
+                            registrarCambio(ARCHIVO_AMISTADES, false);
                             registrarCambio(ARCHIVO_SOLICITUDES, true);
                         }
                         else
@@ -1098,7 +1101,7 @@ void UdeaBook::menuVisitarPerfil(Usuario* usuario)
                     long likesAntes = sumaDeLikes(elegido, iteraciones);
 
                     // verCarrusel se llama sobre el album ORIGINAL (puntero), y devuelve las vueltas que uso
-                    iteraciones += elegido->verCarrusel();
+                    iteraciones += elegido->verCarrusel(usuario->getIndice());
 
                     if (sumaDeLikes(elegido, iteraciones) != likesAntes)
                     {
@@ -1213,8 +1216,9 @@ void UdeaBook::enviarMensajePorNombre(Usuario* usuario)
         if (resultado == Usuario::MENSAJE_ENVIADO)
         {
             std::cout << "Mensaje enviado a " << nombre << "." << std::endl;
-            // enviar un mensaje es un cambio IMPORTANTE (true): se guarda de inmediato en mensajes.txt
-            registrarCambio(ARCHIVO_MENSAJES, true);
+            // enviar un mensaje es un cambio MENOR (false): solo las solicitudes se guardan al instante.
+            // Se guarda con 10 cambios, a los 120 s o al cerrar sesion.
+            registrarCambio(ARCHIVO_MENSAJES, false);
         }
         else if (resultado == Usuario::MENSAJE_VACIO)
         {
