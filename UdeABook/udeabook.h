@@ -99,6 +99,7 @@ public:
     MatrizAmistad& getMatriz();
 
     const std::string& getSubRuta() const;
+    void setSubRuta(const std::string& nuevaSubRuta);
     const std::string& getcarpeta() const;
 
 

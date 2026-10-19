@@ -38,6 +38,10 @@ public:
     Privacidad getPrivacidad() const;
     int getCantidadFotos() const;
     const Foto& getFoto(int indice) const;   // sirve para guardar los likes en el archivo
+    //SETTERS (las fotos no se reemplazan desde afuera: se agregan con agregarFoto)
+    void setNombre(const std::string& nuevoNombre);
+    void setRuta(const std::string& nuevaRuta);
+    void setPrivacidad(Privacidad nuevaPrivacidad);
 
     // Bytes que ocupa el album (objeto + arreglo de fotos + textos), para MedidorRecursos.
     long memoriaBytes() const;

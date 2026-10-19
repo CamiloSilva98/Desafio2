@@ -35,7 +35,7 @@ long memoriaUsuario(const Usuario* usuario){
     }
     total += (long)usuario->getSolicitudes().getCantidad() * (long)sizeof(SolicitudAmistad);
     return total;
-    }
+}
 }
 medidorrecursos::medidorrecursos(): iteraciones(0), memoriaBytes(0) {}
 // Suma vueltas de ciclo al contador. Cada funcionalidad cuenta sus ciclos en una variable local
@@ -58,9 +58,11 @@ void medidorrecursos::calcularMemoria(UdeaBook& plataforma, long bytesLocales){
 }
 void medidorrecursos::mostrarMetricas()const{
     std::cout<< std::endl <<"-----consumo de Recursos-----"<<std::endl
-    << "Iteraciones     :"<<iteraciones<<std::endl
-    << "Memoria en uso: " << memoriaBytes << " bytes ("
-    << memoriaBytes / 1024 << " KB)" << std::endl;
+              << "Iteraciones     :"<<iteraciones<<std::endl
+              << "Memoria en uso: " << memoriaBytes << " bytes ("
+              << memoriaBytes / 1024 << " KB)" << std::endl;
 }
 long medidorrecursos::getIteraciones() const { return iteraciones; }
 long medidorrecursos::getMemoriaBytes() const { return memoriaBytes; }
+void medidorrecursos::setIteraciones(long nuevasIteraciones){iteraciones = nuevasIteraciones;}
+void medidorrecursos::setMemoriaBytes(long nuevaMemoria){memoriaBytes = nuevaMemoria;}

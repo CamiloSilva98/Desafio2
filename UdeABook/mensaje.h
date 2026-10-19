@@ -24,6 +24,10 @@ public:
     Usuario* getReceptor() const;
     const Fecha& getFechaEnvio() const;
     bool estaLeido() const;
+    // setters (el emisor y el receptor no cambian: el mensaje ya esta guardado en sus listas)
+    void setTexto(const std::string& nuevoTexto);
+    void setFechaEnvio(const Fecha& nuevaFecha);
+    void setLeido(bool nuevoLeido);
     // Se ordena por fecha de envio: asi ordenarCronologicamente() funciona con mensajes.
     bool operator<(const Mensaje& otro) const;
 

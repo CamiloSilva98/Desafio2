@@ -1508,3 +1508,7 @@ std::string UdeaBook::rutaCompleta(const std::string& relativa) const
 {
     return subRuta + "/" + relativa;
 }
+void UdeaBook::setSubRuta(const std::string& nuevaSubRuta)
+{
+    subRuta = nuevaSubRuta;
+}

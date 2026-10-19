@@ -306,3 +306,5 @@ int CargadorDatos::cargarMensajes(const string& archivo, const UdeaBook& platafo
     }
     return cargados;
 }
+const std::string& CargadorDatos::getSubRuta() const{return subRuta;}
+void CargadorDatos::setSubRuta(const std::string& nuevaSubRuta){subRuta = nuevaSubRuta;}
