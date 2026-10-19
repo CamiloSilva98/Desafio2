@@ -166,7 +166,7 @@ bool fechaDeUnDia(const std::string& texto, bool esFin, Fecha& fecha)
 // Bytes de un texto local: el objeto string mas su contenido reservado
 long bytesTexto(const std::string& texto)
 {
-    return (long)sizeof(texto) + (long)texto.capacity();
+    return (long)sizeof(texto) + bytesDinamicosTexto(texto);
 }
 
 // Suma los likes de todas las fotos de un album. Se usa antes y despues del carrusel para saber
@@ -195,7 +195,8 @@ void mostrarMensaje(const Mensaje* mensaje)
 
 }
 
-UdeaBook::UdeaBook() : matriz(new MatrizAmistad(0)), cambiosMenores(0)
+UdeaBook::UdeaBook() : matriz(new MatrizAmistad(0)), cambiosMenores(0),
+    iterGuardado(0), chronoGuardado(0), bytesGuardado(0)
 {
     for (int i = 0; i < NUM_ARCHIVOS; i++)
     {
@@ -223,6 +224,9 @@ void UdeaBook::liberar()
     matriz = new MatrizAmistad(0);
     subRuta = "";
     cambiosMenores = 0;
+    iterGuardado = 0;
+    chronoGuardado = 0;
+    bytesGuardado = 0;
     for (int i = 0; i < NUM_ARCHIVOS; i++) {
         archivoSucio[i] = false;
     }
@@ -231,20 +235,22 @@ void UdeaBook::liberar()
 bool UdeaBook::cargarDatos(const std::string& carpeta)
 {
     liberar();
+    // Funcionalidad I: carga de datos. Se mide como las demas.
+    medidorrecursos medidor;
+    long iteraciones = 0;
     std::string base = carpeta.empty() ? "" : carpeta + "/";
     carpetaDatos = base;
 
     if (!cargarConfig(base + "config.txt") ||
-        !cargarUsuarios(base + "usuarios.txt") ||
-        !cargarAmistades(base + "amistades.txt") ||
-        !cargarSolicitudes(base + "solicitudes.txt")) {
+        !cargarUsuarios(base + "usuarios.txt", iteraciones) ||
+        !cargarAmistades(base + "amistades.txt", iteraciones) ||
+        !cargarSolicitudes(base + "solicitudes.txt", iteraciones)) {
         liberar();
         return false;
     }
 
     // albumes, fotos y mensajes los lee CargadorDatos; los albumes van antes que las fotos
     CargadorDatos cargador(subRuta);
-    long iteraciones = 0;   // por ahora no se usa, despues lo recibe el medidor
     if (cargador.cargarAlbumes(base + "albums.txt", *this, iteraciones) < 0 ||
         cargador.cargarFotos(base + "fotos.txt", *this, iteraciones) < 0 ||
         cargador.cargarMensajes(base + "mensajes.txt", *this, iteraciones) < 0) {
@@ -252,6 +258,13 @@ bool UdeaBook::cargarDatos(const std::string& carpeta)
         liberar();
         return false;
     }
+
+    medidor.sumarIteraciones(iteraciones);
+    long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(cargador) + sizeof(&carpeta))
+                        + bytesTexto(base) + bytesDinamicosTexto(cargador.getSubRuta());
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
+    medidor.mostrarMetricas();
     return true;
 }
 
@@ -273,7 +286,7 @@ bool UdeaBook::cargarConfig(const std::string& ruta)
     return true;
 }
 
-bool UdeaBook::cargarUsuarios(const std::string& ruta)
+bool UdeaBook::cargarUsuarios(const std::string& ruta, long& iteraciones)
 {
     std::ifstream archivo(ruta.c_str());
     if (!archivo.is_open())
@@ -301,6 +314,7 @@ bool UdeaBook::cargarUsuarios(const std::string& ruta)
     std::string campos[8];
     for (int i = 0; i < n; i++)
     {
+        iteraciones++;   // una vuelta por usuario leido
         int numLinea = i + 2;
         if (!leerLinea(archivo, linea))
         {
@@ -339,7 +353,7 @@ bool UdeaBook::cargarUsuarios(const std::string& ruta)
     return true;
 }
 
-bool UdeaBook::cargarAmistades(const std::string& ruta)
+bool UdeaBook::cargarAmistades(const std::string& ruta, long& iteraciones)
 {
     std::ifstream archivo(ruta.c_str());
     if (!archivo.is_open())
@@ -359,6 +373,7 @@ bool UdeaBook::cargarAmistades(const std::string& ruta)
     std::string campos[2];
     for (long long k = 0; k < m; k++)
     {
+        iteraciones++;   // una vuelta por linea de amistad
         int numLinea = (int)k + 2;
         if (!leerLinea(archivo, linea))
         {
@@ -370,8 +385,8 @@ bool UdeaBook::cargarAmistades(const std::string& ruta)
             error(ruta, numLinea, "debe tener 2 campos separados por |");
             return false;
         }
-        int a = buscarIndice(campos[0]);
-        int b = buscarIndice(campos[1]);
+        int a = buscarIndice(campos[0], iteraciones);
+        int b = buscarIndice(campos[1], iteraciones);
         if (a < 0 || b < 0)
         {
             advertencia(ruta, numLinea, "algun usuario no existe");
@@ -394,7 +409,7 @@ bool UdeaBook::cargarAmistades(const std::string& ruta)
     return true;
 }
 
-bool UdeaBook::cargarSolicitudes(const std::string& ruta)
+bool UdeaBook::cargarSolicitudes(const std::string& ruta, long& iteraciones)
 {
     std::ifstream archivo(ruta.c_str());
     if (!archivo.is_open()) {
@@ -411,9 +426,9 @@ bool UdeaBook::cargarSolicitudes(const std::string& ruta)
     }
 
     std::string campos[2];
-    long iteraciones = 0;
     for (long long k = 0; k < s; k++)
     {
+        iteraciones++;   // una vuelta por linea de solicitud
         int numLinea = (int)k + 2;
         if (!leerLinea(archivo, linea))
         {
@@ -425,8 +440,8 @@ bool UdeaBook::cargarSolicitudes(const std::string& ruta)
             error(ruta, numLinea, "debe tener 2 campos separados por |");
             return false;
         }
-        int emisor = buscarIndice(campos[0]);
-        int receptor = buscarIndice(campos[1]);
+        int emisor = buscarIndice(campos[0], iteraciones);
+        int receptor = buscarIndice(campos[1], iteraciones);
         if (emisor < 0 || receptor < 0)
         {
             advertencia(ruta, numLinea, "algun usuario no existe");
@@ -483,20 +498,22 @@ Usuario* UdeaBook::buscarUsuario(const std::string& nombre) const
     return usuarios[indice];
 }
 
-Usuario* UdeaBook::iniciarSesion(const std::string& nombre, const std::string& contrasenia) const
+Usuario* UdeaBook::iniciarSesion(const std::string& nombre, const std::string& contrasenia, long& iteraciones) const
 {
-    Usuario* usuario = buscarUsuario(nombre);
-    if (usuario == nullptr || usuario->getContrasenia() != contrasenia)
+    // busqueda binaria contada: sus vueltas se suman a iteraciones
+    int indice = buscarIndice(nombre, iteraciones);
+    if (indice < 0 || usuarios[indice]->getContrasenia() != contrasenia)
     {
         return nullptr;
     }
-    return usuario;
+    return usuarios[indice];
 }
 
-Usuario* UdeaBook::pedirSesion() const
+Usuario* UdeaBook::pedirSesion(long& iteraciones) const
 {
     for (int intento = 1; intento <= 3; intento++)
     {
+        iteraciones++;   // una vuelta por intento de inicio de sesion
         std::string nombre;
         std::string contrasenia;
         std::cout << "Usuario: ";
@@ -509,7 +526,7 @@ Usuario* UdeaBook::pedirSesion() const
         {
             return nullptr;
         }
-        Usuario* usuario = iniciarSesion(nombre, contrasenia);
+        Usuario* usuario = iniciarSesion(nombre, contrasenia, iteraciones);
         if (usuario != nullptr)
         {
             return usuario;
@@ -542,12 +559,15 @@ void UdeaBook::mostrarPantallaInicio(const Usuario* usuario, const ListaDinamica
               << ".- Ingrese 'S' o 's' para cerrar su sesion." << std::endl << std::endl;
 }
 
-void UdeaBook::ejecutarSesion(Usuario* usuario)
+void UdeaBook::ejecutarSesion(Usuario* usuario, long iteracionesLogin)
 {
     // el grupo de fotos se elige una vez y se conserva mientras dure la sesion
     ListaDinamica<Usuario*> sinExcluir;
-    long iterFotos = 0;
+    // las vueltas del inicio de sesion se reportan junto con las de las fotos de perfil (funcionalidad II)
+    long iterFotos = iteracionesLogin;
     ListaDinamica<Usuario*> fotos = usuario->elegirAmigosAleatorio(*matriz, sinExcluir, iterFotos);
+    // cada amigo elegido costo una llamada a std::rand
+    long randFotos = fotos.getCantidad();
     bool mostrarMetricasFotos = true;
     bool yaCambio = false;
     std::string aviso;
@@ -565,9 +585,12 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
         {
             medidorrecursos medidor;
             medidor.sumarIteraciones(iterFotos);
-            long bytesLocales = (long)(sizeof(medidor) + sizeof(iterFotos) + sizeof(usuario)
-                                        + sizeof(mostrarMetricasFotos) + sizeof(yaCambio))
-                                + bytesTexto(aviso) + fotos.memoriaBytes() + sinExcluir.memoriaBytes();
+            medidor.sumarExternos(randFotos, 0, 0);
+            // arreglos temporales de elegirAmigosAleatorio (pesos, actuales y vetado), uno por amigo
+            long bytesTemporales = (long)usuario->getAmigos().getCantidad() * (long)(2 * sizeof(int) + sizeof(bool));
+            long bytesLocales = (long)(sizeof(medidor) + sizeof(iterFotos) + sizeof(iteracionesLogin) + sizeof(randFotos)
+                                        + sizeof(usuario) + sizeof(mostrarMetricasFotos) + sizeof(yaCambio))
+                                + bytesTexto(aviso) + fotos.memoriaBytes() + sinExcluir.memoriaBytes() + bytesTemporales;
             medidor.calcularMemoria(*this, bytesLocales);
             medidor.mostrarMetricas();
             mostrarMetricasFotos = false;
@@ -601,6 +624,7 @@ void UdeaBook::ejecutarSesion(Usuario* usuario)
                 iterFotos = 0;
                 // el nuevo grupo no repite las fotos del anterior (si hay amigos suficientes)
                 fotos = usuario->elegirAmigosAleatorio(*matriz, fotos, iterFotos);
+                randFotos = fotos.getCantidad();
                 yaCambio = true;
                 mostrarMetricasFotos = true;
 
@@ -808,7 +832,8 @@ void UdeaBook::enviarSolicitudPorNombre(Usuario* usuario)
     medidor.sumarIteraciones(iteraciones);
     long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(posicion) + sizeof(usuario))
                         + bytesTexto(nombre);
-    medidor.calcularMemoria(*this, bytesLocales);
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
     medidor.mostrarMetricas();
 }
 
@@ -820,6 +845,8 @@ void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
     std::string accion;
     int posicion = 0;
     bool volver = false;
+    long long valor = 0;
+    Usuario* emisor = nullptr;
     while (!volver)
     {
         // la lista se vuelve a leer en cada vuelta porque al aceptar una se borra
@@ -839,8 +866,6 @@ void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
                           << usuarios[pendientes[i]->getIndiceEmisor()]->getNombreUsuario() << std::endl;
             }
             std::cout << std::endl << "Numero de la solicitud a revisar(0 para volver): ";
-            long long valor;
-
             if (!leerOpcion(texto))
             {
                 std::cout << std::endl;
@@ -855,7 +880,7 @@ void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
                 else
                 {
                     posicion = (int)valor - 1;
-                    Usuario* emisor = usuarios[pendientes[posicion]->getIndiceEmisor()];
+                    emisor = usuarios[pendientes[posicion]->getIndiceEmisor()];
                     std::cout << "1.- Aceptar  2.- Rechazar  0.- Cancelar: ";
                     if (!leerOpcion(accion))
                     {
@@ -908,8 +933,9 @@ void UdeaBook::menuAceptarSolicitudes(Usuario* usuario)
     }
     medidor.sumarIteraciones(iteraciones);
     long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(posicion) + sizeof(volver)
-                                + sizeof(usuario)) + bytesTexto(texto) + bytesTexto(accion);
-    medidor.calcularMemoria(*this, bytesLocales);
+                                + sizeof(valor) + sizeof(emisor) + sizeof(usuario)) + bytesTexto(texto) + bytesTexto(accion);
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
     medidor.mostrarMetricas();
 }
 
@@ -997,8 +1023,11 @@ void UdeaBook::menuSugerencias(Usuario* usuario)
     medidor.sumarIteraciones(iteraciones);
     long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(valor) + sizeof(k)
                                 + sizeof(usuario)) + bytesTexto(texto)
-                        + enComun.memoriaBytes() + sugeridos.memoriaBytes();
-    medidor.calcularMemoria(*this, bytesLocales);
+                        + enComun.memoriaBytes() + sugeridos.memoriaBytes()
+                        // arreglos temporales de sugerirAmigos (contadores de n y mejores/valores de k), ya liberados
+                        + (long)usuarios.getCantidad() * (long)sizeof(int) + 2L * k * (long)sizeof(int);
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
     medidor.mostrarMetricas();
 }
 
@@ -1123,7 +1152,8 @@ void UdeaBook::menuVisitarPerfil(Usuario* usuario)
     medidor.sumarIteraciones(iteraciones);
     long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(posicion) + sizeof(usuario))
                         + bytesTexto(nombre) + bytesTexto(texto) + visibles.memoriaBytes();
-    medidor.calcularMemoria(*this, bytesLocales);
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
     medidor.mostrarMetricas();
 }
 
@@ -1213,6 +1243,8 @@ void UdeaBook::enviarMensajePorNombre(Usuario* usuario)
         // en enviados del emisor y en recibidos del receptor, manteniendo el orden por fecha
         Usuario::ResultadoMensaje resultado =
             usuario->enviarMensaje(texto, usuarios[posicion], *matriz, fechaActual(), iteraciones);
+        // fechaActual() llamo a std::time y a std::localtime
+        medidor.sumarExternos(0, 2, 0);
         if (resultado == Usuario::MENSAJE_ENVIADO)
         {
             std::cout << "Mensaje enviado a " << nombre << "." << std::endl;
@@ -1238,7 +1270,8 @@ void UdeaBook::enviarMensajePorNombre(Usuario* usuario)
     medidor.sumarIteraciones(iteraciones);
     long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(posicion) + sizeof(usuario))
                         + bytesTexto(nombre) + bytesTexto(texto);
-    medidor.calcularMemoria(*this, bytesLocales);
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
     medidor.mostrarMetricas();
 }
 
@@ -1286,8 +1319,9 @@ void UdeaBook::leerMensajesNuevos(Usuario* usuario)
 
     medidor.sumarIteraciones(iteraciones);
     long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(nuevos) + sizeof(usuario)
-                                + sizeof(recibidos));
-    medidor.calcularMemoria(*this, bytesLocales);
+                                + sizeof(const void*));   // "recibidos" es una referencia
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
     medidor.mostrarMetricas();
 }
 
@@ -1377,9 +1411,10 @@ void UdeaBook::buscarMensajesPorFechas(Usuario* usuario)
 
     medidor.sumarIteraciones(iteraciones);
     long bytesLocales = (long)(sizeof(medidor) + sizeof(iteraciones) + sizeof(encontrados) + sizeof(bajo)
-                                + sizeof(alto) + sizeof(usuario) + sizeof(recibidos) + sizeof(inicio) + sizeof(fin))
+                                + sizeof(alto) + sizeof(usuario) + sizeof(const void*) + sizeof(inicio) + sizeof(fin))
                         + bytesTexto(textoInicio) + bytesTexto(textoFin);
-    medidor.calcularMemoria(*this, bytesLocales);
+    // trabajo del guardado automatico que ocurrio en esta funcionalidad (iteraciones, chrono, memoria temporal)
+    medidor.calcularMemoria(*this, bytesLocales + volcarGuardado(medidor));
     medidor.mostrarMetricas();
 }
 
@@ -1413,6 +1448,7 @@ void UdeaBook::registrarCambio(ArchivoDatos archivo, bool critico)
     // el tiempo se cuenta desde el primer cambio menor que no se ha guardado
     if (cambiosMenores == 0)
     {
+        chronoGuardado++;   // llamada a steady_clock::now
         primerCambioMenor = std::chrono::steady_clock::now();
     }
     cambiosMenores++;
@@ -1426,6 +1462,7 @@ void UdeaBook::revisarGuardado()
     {
         return;
     }
+    chronoGuardado++;   // llamada a steady_clock::now
     long long segundos = std::chrono::duration_cast<std::chrono::seconds>(
                              std::chrono::steady_clock::now() - primerCambioMenor).count();
     if (cambiosMenores >= MAX_CAMBIOS_MENORES || segundos >= MAX_SEGUNDOS_SIN_GUARDAR)
@@ -1441,7 +1478,7 @@ bool UdeaBook::guardarPendientes()
     // solo se reescriben los archivos marcados; si uno falla queda marcado para el proximo intento
     if (archivoSucio[ARCHIVO_AMISTADES])
     {
-        if (GuardadorDatos::guardarAmistades(carpetaDatos + "amistades.txt", *this))
+        if (GuardadorDatos::guardarAmistades(carpetaDatos + "amistades.txt", *this, iterGuardado, bytesGuardado))
         {
             archivoSucio[ARCHIVO_AMISTADES] = false;
         }
@@ -1452,7 +1489,7 @@ bool UdeaBook::guardarPendientes()
     }
     if (archivoSucio[ARCHIVO_SOLICITUDES])
     {
-        if (GuardadorDatos::guardarSolicitudes(carpetaDatos + "solicitudes.txt", *this))
+        if (GuardadorDatos::guardarSolicitudes(carpetaDatos + "solicitudes.txt", *this, iterGuardado, bytesGuardado))
         {
             archivoSucio[ARCHIVO_SOLICITUDES] = false;
         }
@@ -1463,7 +1500,7 @@ bool UdeaBook::guardarPendientes()
     }
     if (archivoSucio[ARCHIVO_MENSAJES])
     {
-        if (GuardadorDatos::guardarMensajes(carpetaDatos + "mensajes.txt", *this))
+        if (GuardadorDatos::guardarMensajes(carpetaDatos + "mensajes.txt", *this, iterGuardado, bytesGuardado))
         {
             archivoSucio[ARCHIVO_MENSAJES] = false;
         }
@@ -1474,7 +1511,7 @@ bool UdeaBook::guardarPendientes()
     }
     if (archivoSucio[ARCHIVO_FOTOS])
     {
-        if (GuardadorDatos::guardarFotos(carpetaDatos + "fotos.txt", *this))
+        if (GuardadorDatos::guardarFotos(carpetaDatos + "fotos.txt", *this, iterGuardado, bytesGuardado))
         {
             archivoSucio[ARCHIVO_FOTOS] = false;
         }
@@ -1492,6 +1529,17 @@ bool UdeaBook::guardarPendientes()
         std::cerr << "No se pudieron guardar todos los archivos en \"" << carpetaDatos << "\"" << std::endl;
     }
     return bien;
+}
+
+long UdeaBook::volcarGuardado(medidorrecursos& medidor)
+{
+    medidor.sumarIteraciones(iterGuardado);
+    medidor.sumarExternos(0, 0, chronoGuardado);
+    long bytes = bytesGuardado;
+    iterGuardado = 0;
+    chronoGuardado = 0;
+    bytesGuardado = 0;
+    return bytes;
 }
 
 const std::string& UdeaBook::getSubRuta() const

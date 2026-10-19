@@ -77,6 +77,13 @@ bool MatrizAmistad::sonAmigos(int i, int j) const
 
 int MatrizAmistad::contarEnComun(int i, int j) const
 {
+    // la version sin contador solo llama a la otra y descarta el conteo
+    long sinContar = 0;
+    return contarEnComun(i, j, sinContar);
+}
+
+int MatrizAmistad::contarEnComun(int i, int j, long& iteraciones) const
+{
     if (!indiceValido(i) || !indiceValido(j))
     {
         return 0;
@@ -84,10 +91,12 @@ int MatrizAmistad::contarEnComun(int i, int j) const
     int total = 0;
     for (int p = 0; p < palabrasPorFila; p++)
     {
+        iteraciones++;   // una vuelta por palabra de la fila
         unsigned long long comun = bits[(long)i * palabrasPorFila + p] &
                                    bits[(long)j * palabrasPorFila + p];
         // se cuentan los bits prendidos quitando el bit mas bajo cada vez
         while (comun != 0) {
+            iteraciones++;   // una vuelta por bit prendido
             comun &= (comun - 1);
             total++;
         }

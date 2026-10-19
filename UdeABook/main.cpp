@@ -47,10 +47,11 @@ int main()
 
         if (opcion == "1")
         {
-            Usuario* usuario = app.pedirSesion();
+            long iteracionesLogin = 0;
+            Usuario* usuario = app.pedirSesion(iteracionesLogin);
             if (usuario != nullptr)
             {
-                app.ejecutarSesion(usuario);
+                app.ejecutarSesion(usuario, iteracionesLogin);
             }
             else
             {

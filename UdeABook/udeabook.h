@@ -7,6 +7,8 @@
 #include "MatrizAmistad.h"
 #include "Usuario.h"
 
+class medidorrecursos;
+
 // clase principal: carga los datos, busca usuarios e inicia sesion
 class UdeaBook
 {
@@ -34,6 +36,12 @@ private:
     static const int MAX_SEGUNDOS_SIN_GUARDAR = 120;
     bool archivoSucio[NUM_ARCHIVOS];     // true si el archivo cambio y falta guardarlo
     int cambiosMenores;                  // cambios menores sin guardar
+
+    // trabajo del guardado automatico que aun no se ha reportado en ninguna funcionalidad:
+    // vueltas de ciclo, llamadas a chrono y mayor memoria temporal usada al armar los archivos
+    long iterGuardado;
+    long chronoGuardado;
+    long bytesGuardado;
     std::chrono::steady_clock::time_point primerCambioMenor;   // hora del primero de ellos
 
     // la plataforma es duena de los usuarios y de la matriz, no se copia
@@ -42,9 +50,14 @@ private:
 
     void liberar();
     bool cargarConfig(const std::string& ruta);
-    bool cargarUsuarios(const std::string& ruta);
-    bool cargarAmistades(const std::string& ruta);
-    bool cargarSolicitudes(const std::string& ruta);
+    // las tres SUMAN a "iteraciones" las vueltas de sus ciclos (para medidorrecursos)
+    bool cargarUsuarios(const std::string& ruta, long& iteraciones);
+    bool cargarAmistades(const std::string& ruta, long& iteraciones);
+    bool cargarSolicitudes(const std::string& ruta, long& iteraciones);
+
+    // pasa al medidor el trabajo pendiente del guardado (iteraciones y chrono), lo reinicia y
+    // devuelve los bytes temporales usados, para sumarlos a bytesLocales
+    long volcarGuardado(medidorrecursos& medidor);
 
     // dibuja las fotos de perfil de amigos, el saludo y el menu principal
     void mostrarPantallaInicio(const Usuario* usuario, const ListaDinamica<Usuario*>& amigosMostrados) const;
@@ -83,12 +96,15 @@ public:
     Usuario* buscarUsuario(const std::string& nombre) const;
 
     // devuelve el usuario si el nombre y la contrasenia coinciden, si no nullptr
-    Usuario* iniciarSesion(const std::string& nombre, const std::string& contrasenia) const;
+    // "iteraciones" se SUMA a lo que traiga (vueltas de la busqueda binaria)
+    Usuario* iniciarSesion(const std::string& nombre, const std::string& contrasenia, long& iteraciones) const;
 
     // pide las credenciales por consola con maximo 3 intentos
-    Usuario* pedirSesion() const;
+    // las vueltas de busqueda e intentos se SUMAN a "iteraciones"
+    Usuario* pedirSesion(long& iteraciones) const;
     // pantalla de inicio y menu principal del usuario; termina cuando escribe S
-    void ejecutarSesion(Usuario* usuario);
+    // iteracionesLogin son las del inicio de sesion: se reportan junto con las fotos de perfil
+    void ejecutarSesion(Usuario* usuario, long iteracionesLogin);
 
     // hasta k amigos de amigos (que no son amigos ni el mismo usuario) con mas amigos en comun,
     // de mayor a menor; en enComun queda la cantidad de amigos en comun de cada uno

@@ -11,11 +11,13 @@ class UdeaBook;
 class GuardadorDatos
 {
 public:
-    // Los cuatro devuelven false si no se pudo escribir el archivo
-    static bool guardarAmistades(const std::string& archivo, const UdeaBook& plataforma);
-    static bool guardarSolicitudes(const std::string& archivo, const UdeaBook& plataforma);
-    static bool guardarMensajes(const std::string& archivo, const UdeaBook& plataforma);
-    static bool guardarFotos(const std::string& archivo, const UdeaBook& plataforma);
+    // Los cuatro devuelven false si no se pudo escribir el archivo.
+    // "iteraciones" se SUMA a lo que traiga (vueltas de los ciclos) y "bytesTemporales" queda en el
+    // mayor valor visto de memoria temporal usada para armar el texto (para medidorrecursos).
+    static bool guardarAmistades(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones, long& bytesTemporales);
+    static bool guardarSolicitudes(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones, long& bytesTemporales);
+    static bool guardarMensajes(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones, long& bytesTemporales);
+    static bool guardarFotos(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones, long& bytesTemporales);
 
 private:
     // Escribe el contenido completo en el archivo; false si no se pudo escribir

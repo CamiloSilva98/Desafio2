@@ -62,6 +62,11 @@ int Usuario::amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz) con
     return matriz.contarEnComun(indice, otro.indice);
 }
 
+int Usuario::amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz, long& iteraciones) const
+{
+    return matriz.contarEnComun(indice, otro.indice, iteraciones);
+}
+
 bool Usuario::tieneSolicitudDe(const Usuario* origen, long& iteraciones) const
 {
     for (int i = 0; i < solicitudes.getCantidad(); i++)
@@ -217,10 +222,12 @@ ListaDinamica<Usuario*> Usuario::elegirAmigosAleatorio(const MatrizAmistad& matr
 
     for (int i = 0; i < n; i++)
     {
-        pesos[i] = pesoPrioridad(amigosEnComun(*amigos[i], matriz));
+        iteraciones++;
+        pesos[i] = pesoPrioridad(amigosEnComun(*amigos[i], matriz, iteraciones));
         vetado[i] = false;
         for (int j = 0; j < excluidos.getCantidad(); j++)
         {
+            iteraciones++;
             if (amigos[i] == excluidos[j])
             {
                 vetado[i] = true;
@@ -237,6 +244,7 @@ ListaDinamica<Usuario*> Usuario::elegirAmigosAleatorio(const MatrizAmistad& matr
     {
         for (int i = 0; i < n; i++)
         {
+            iteraciones++;
             actuales[i] = vetado[i] ? pesos[i] : 0;
         }
         sortearGrupo(actuales, n, elegidos, iteraciones);

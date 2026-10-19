@@ -1,4 +1,5 @@
 #include "album.h"
+#include "medidorrecursos.h"
 #include <iostream>
 
 using namespace std;
@@ -84,13 +85,13 @@ const Foto& Album::getFoto(int indice) const{return fotos[indice];}
 long Album::memoriaBytes() const{
     // sizeof(*this) ya incluye los atributos del objeto (strings, enum y el objeto lista)
     long total = (long)sizeof(*this);
-    total+= (long)nombre.capacity() + (long)ruta.capacity();
+    total+= bytesDinamicosTexto(nombre) + bytesDinamicosTexto(ruta);
     // arreglo dinamico de fotos: ocupa TODA la capacidad reservada, no solo lo usado
     total += (long)fotos.getCapacidad() * (long)sizeof(Foto);
     // la ruta de cada foto tambien es un texto dinamico
     for (int i = 0; i < fotos.getCantidad(); i++)
     {
-        total += (long)fotos[i].getRuta().capacity();
+        total += bytesDinamicosTexto(fotos[i].getRuta());
     }
     return total;
 }
