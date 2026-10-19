@@ -1,4 +1,5 @@
 #include "mensaje.h"
+#include "medidorrecursos.h"
 
 // Lista de inicializacion: cada atributo se construye directamente con su valor
 Mensaje::Mensaje(Usuario* emisor, Usuario* receptor, const Fecha& fechaEnvio,
@@ -26,7 +27,7 @@ bool Mensaje::operator<(const Mensaje& otro) const
 long Mensaje::memoriaBytes() const
 {
     // sizeof(*this) incluye los atributos; el contenido del texto vive aparte, en memoria dinamica
-    return (long)sizeof(*this) + (long)texto.capacity();
+    return (long)sizeof(*this) + bytesDinamicosTexto(texto);
 }
 void Mensaje::setTexto(const std::string& nuevoTexto){texto = nuevoTexto;}
 void Mensaje::setFechaEnvio(const Fecha& nuevaFecha){fechaEnvio = nuevaFecha;}

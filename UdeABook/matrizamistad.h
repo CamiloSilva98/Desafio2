@@ -26,6 +26,8 @@ public:
 
     // cuenta los amigos que tienen en comun i y j (AND de filas)
     int contarEnComun(int i, int j) const;
+    // igual, pero SUMA a "iteraciones" las vueltas internas (palabras de la fila y bits contados)
+    int contarEnComun(int i, int j, long& iteraciones) const;
 
     // bytes que ocupa la matriz (objeto mas el arreglo de bits)
     long memoriaBytes() const;

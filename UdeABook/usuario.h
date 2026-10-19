@@ -101,6 +101,8 @@ public:
 
     // amigos que tiene en comun con otro usuario
     int amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz) const;
+    // igual, pero SUMA a "iteraciones" las vueltas de la matriz (para medidorrecursos)
+    int amigosEnComun(const Usuario& otro, const MatrizAmistad& matriz, long& iteraciones) const;
 
     // revisa si ya hay una solicitud recibida de ese usuario
     bool tieneSolicitudDe(const Usuario* origen, long& iteraciones) const;
