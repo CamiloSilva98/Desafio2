@@ -27,3 +27,5 @@ bool SolicitudAmistad::aceptar(MatrizAmistad& matriz)
     // si los indices no eran validos la matriz no cambia y se devuelve false
     return matriz.sonAmigos(indiceEmisor, indiceReceptor);
 }
+void SolicitudAmistad::setIndiceEmisor(int nuevoIndice){indiceEmisor = nuevoIndice;}
+void SolicitudAmistad::setIndiceReceptor(int nuevoIndice){indiceReceptor = nuevoIndice;}

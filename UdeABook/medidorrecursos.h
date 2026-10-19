@@ -23,6 +23,8 @@ public:
     void mostrarMetricas() const;
     long getIteraciones() const;
     long getMemoriaBytes() const;
+    void setIteraciones(long nuevasIteraciones);
+    void setMemoriaBytes(long nuevaMemoria);
 
 };
 

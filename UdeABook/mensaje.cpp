@@ -28,3 +28,6 @@ long Mensaje::memoriaBytes() const
     // sizeof(*this) incluye los atributos; el contenido del texto vive aparte, en memoria dinamica
     return (long)sizeof(*this) + (long)texto.capacity();
 }
+void Mensaje::setTexto(const std::string& nuevoTexto){texto = nuevoTexto;}
+void Mensaje::setFechaEnvio(const Fecha& nuevaFecha){fechaEnvio = nuevaFecha;}
+void Mensaje::setLeido(bool nuevoLeido){leido = nuevoLeido;}

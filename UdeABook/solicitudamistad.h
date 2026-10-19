@@ -16,6 +16,8 @@ public:
 
     int getIndiceEmisor() const;
     int getIndiceReceptor() const;
+    void setIndiceEmisor(int nuevoIndice);
+    void setIndiceReceptor(int nuevoIndice);
 
     // crea la amistad en la matriz; devuelve false si ya eran amigos o los indices no sirven
     bool aceptar(MatrizAmistad& matriz);

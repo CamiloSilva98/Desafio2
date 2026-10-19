@@ -23,6 +23,8 @@ private:
 public:
     // Recibe la subRuta que ya leyo UdeaBook, para no leer config.txt dos veces.
     CargadorDatos(const std::string& subRuta);
+    const std::string& getSubRuta() const;
+    void setSubRuta(const std::string& nuevaSubRuta);
 
     // Los tres devuelven cuantos registros se cargaron bien, o -1 si el archivo no se pudo abrir.
     int cargarAlbumes(const std::string& archivo, const UdeaBook& plataforma, long& iteraciones);

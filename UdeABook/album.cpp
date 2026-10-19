@@ -94,3 +94,6 @@ long Album::memoriaBytes() const{
     }
     return total;
 }
+void Album::setNombre(const string& nuevoNombre){nombre = nuevoNombre;}
+void Album::setRuta(const string& nuevaRuta){ruta = nuevaRuta;}
+void Album::setPrivacidad(Privacidad nuevaPrivacidad){privacidad = nuevaPrivacidad;}
